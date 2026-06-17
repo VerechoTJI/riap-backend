@@ -24,12 +24,16 @@ public class JpaConfig {
     @Value("${app.datasource.password}")
     private String password;
 
+    @Value("${app.datasource.ddl-auto:validate}")
+    private String ddlAuto;
+
     @Bean
     public EntityManagerFactory entityManagerFactory() {
         Map<String, String> props = Map.of(
                 "jakarta.persistence.jdbc.url", jdbcUrl,
                 "jakarta.persistence.jdbc.user", username,
-                "jakarta.persistence.jdbc.password", password
+                "jakarta.persistence.jdbc.password", password,
+                "hibernate.hbm2ddl.auto", ddlAuto
         );
         return Persistence.createEntityManagerFactory("riap-pu", props);
     }
