@@ -1,6 +1,7 @@
 package com.riap.pbi.dbms.persistence.jpa;
 
 import com.riap.pbi.dbms.domain.Listing;
+import com.riap.pbi.dbms.domain.PropertyType;
 import com.riap.pbi.dbms.domain.UserAccount;
 import com.riap.pbi.dbms.domain.UserAccountRole;
 import com.riap.pbi.dbms.domain.UserAccountStatus;
@@ -32,10 +33,18 @@ class ListingRepositoryIT {
         UserAccountJpaAdapter userAdapter = new UserAccountJpaAdapter(emf);
         ListingJpaAdapter listingAdapter = new ListingJpaAdapter(emf);
 
-        UserAccount landlord = UserAccount.create("landlord-it@example.com", "pwd", UserAccountRole.LANDLORD, UserAccountStatus.ACTIVE);
+        UserAccount landlord = UserAccount.create("landlord-it@example.com", "pwd",
+                UserAccountRole.LANDLORD, UserAccountStatus.ACTIVE);
         UserAccount savedLandlord = userAdapter.save(landlord);
 
-        Listing listing = Listing.create("Cozy Studio", 25000L, savedLandlord.getId());
+        Listing listing = Listing.builder()
+                .title("Cozy Studio")
+                .rentCents(25000L)
+                .landlordId(savedLandlord.getId())
+                .city("台北市")
+                .propertyType(PropertyType.STUDIO)
+                .sizePing(8)
+                .build();
         Listing saved = listingAdapter.save(listing);
 
         Assertions.assertNotNull(saved.getId());
