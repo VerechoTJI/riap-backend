@@ -1,15 +1,13 @@
 package com.riap.pbi;
 
-public final class Application {
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
-    private Application() {
-    }
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+public class Application {
 
     public static void main(String[] args) {
-        System.out.println(message());
-    }
-
-    public static String message() {
-        return "RIAP Maven project is ready.";
+        SpringApplication.run(Application.class, args);
     }
 }
