@@ -8,20 +8,24 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class ChatWebSocketHandler extends TextWebSocketHandler implements MessageBroadcaster {
 
     private final AuthenticationProvider authenticationProvider;
+    private final ObjectMapper objectMapper;
 
     // userId -> session
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
-    public ChatWebSocketHandler(AuthenticationProvider authenticationProvider) {
+    public ChatWebSocketHandler(AuthenticationProvider authenticationProvider, ObjectMapper objectMapper) {
         this.authenticationProvider = authenticationProvider;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -63,34 +67,44 @@ public class ChatWebSocketHandler extends TextWebSocketHandler implements Messag
 
     @Override
     public void broadcastToRoom(String chatRoomId, Message message) {
-        // For simplicity, we just broadcast to the room by sending to all connected users
-        // In a real implementation, we'd look up the users in the room.
-        // As a pure fabrication, we assume we send it to everyone or we need room members
-        // To be correct, we should get the participants of the room.
-        // For now, this is a placeholder implementation.
-        String payload = "{\"chatRoomId\":\"" + chatRoomId + "\", \"content\":\"" + message.getContent() + "\"}";
-        sessions.values().forEach(session -> {
-            try {
-                if (session.isOpen()) {
-                    session.sendMessage(new TextMessage(payload));
-                }
-            } catch (Exception e) {
-                // ignore
-            }
-        });
-    }
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("chatRoomId", chatRoomId);
+            map.put("content", message.getContent());
+            String payload = objectMapper.writeValueAsString(map);
 
+            sessions.values().forEach(session -> {
+                try {
+                    if (session.isOpen()) {
+                        session.sendMessage(new TextMessage(payload));
+                    }
+                } catch (Exception e) {
+                    // ignore
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     @Override
     public void notifyReadReceipt(String chatRoomId, String readerId) {
-        String payload = "{\"chatRoomId\":\"" + chatRoomId + "\", \"readBy\":\"" + readerId + "\"}";
-        sessions.values().forEach(session -> {
-            try {
-                if (session.isOpen()) {
-                    session.sendMessage(new TextMessage(payload));
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("chatRoomId", chatRoomId);
+            map.put("readBy", readerId);
+            String payload = objectMapper.writeValueAsString(map);
+
+            sessions.values().forEach(session -> {
+                try {
+                    if (session.isOpen()) {
+                        session.sendMessage(new TextMessage(payload));
+                    }
+                } catch (Exception e) {
+                    // ignore
                 }
-            } catch (Exception e) {
-                // ignore
-            }
-        });
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

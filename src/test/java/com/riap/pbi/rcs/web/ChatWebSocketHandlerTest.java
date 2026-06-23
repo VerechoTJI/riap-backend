@@ -13,16 +13,22 @@ import java.time.Instant;
 
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
+import java.util.LinkedHashMap;
+
 class ChatWebSocketHandlerTest {
 
     private AuthenticationProvider authenticationProvider;
     private ChatWebSocketHandler handler;
     private WebSocketSession session;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         authenticationProvider = mock(AuthenticationProvider.class);
-        handler = new ChatWebSocketHandler(authenticationProvider);
+        objectMapper = new ObjectMapper();
+        handler = new ChatWebSocketHandler(authenticationProvider, objectMapper);
         session = mock(WebSocketSession.class);
     }
 
@@ -49,6 +55,11 @@ class ChatWebSocketHandlerTest {
         Message msg = Message.rehydrate("msg-1", "room-1", "user-2", "Hello Broadcaster", Instant.now(), false);
         handler.broadcastToRoom("room-1", msg);
 
-        verify(session).sendMessage(new TextMessage("{\"chatRoomId\":\"room-1\", \"content\":\"Hello Broadcaster\"}"));
+        Map<String, Object> expectedMap = new java.util.HashMap<>();
+        expectedMap.put("chatRoomId", "room-1");
+        expectedMap.put("content", "Hello Broadcaster");
+        String expectedJson = objectMapper.writeValueAsString(expectedMap);
+
+        verify(session).sendMessage(new TextMessage(expectedJson));
     }
 }
