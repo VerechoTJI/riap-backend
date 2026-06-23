@@ -1,14 +1,17 @@
 package com.riap.pbi.rcs.service;
 
 import com.riap.pbi.rcs.domain.ChatRoom;
+import com.riap.pbi.rcs.domain.ChatRoomDTO;
 import com.riap.pbi.rcs.domain.Message;
 import com.riap.pbi.rcs.port.ChatRoomRepository;
 import com.riap.pbi.rcs.port.LmsClient;
 import com.riap.pbi.rcs.port.MessageBroadcaster;
 import com.riap.pbi.rcs.port.MessageRepository;
+import com.riap.pbi.rcs.port.UasClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
@@ -16,20 +19,22 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final MessageRepository messageRepository;
     private final LmsClient lmsClient;
+    private final UasClient uasClient;
     private final MessageBroadcaster messageBroadcaster;
 
     public ChatService(ChatRoomRepository chatRoomRepository,
                        MessageRepository messageRepository,
                        LmsClient lmsClient,
+                       UasClient uasClient,
                        MessageBroadcaster messageBroadcaster) {
         this.chatRoomRepository = chatRoomRepository;
         this.messageRepository = messageRepository;
         this.lmsClient = lmsClient;
+        this.uasClient = uasClient;
         this.messageBroadcaster = messageBroadcaster;
     }
 
     public ChatRoom createOrGetRoom(String tenantId, String landlordId, String listingId) {
-        // SDD implies it first checks history, but our current mock repository handles creation/fetching
         return chatRoomRepository.addChatSession(tenantId, landlordId, listingId);
     }
 
@@ -52,8 +57,22 @@ public class ChatService {
         return saved.getId();
     }
 
-    public List<ChatRoom> getUserChatRooms(String userId) {
-        return chatRoomRepository.findByUserId(userId);
+    public List<ChatRoomDTO> getUserChatRooms(String userId) {
+        List<ChatRoom> rooms = chatRoomRepository.findByUserId(userId);
+        return rooms.stream().map(room -> {
+            String otherUserId = userId.equals(room.getLandlordId()) ? room.getTenantId() : room.getLandlordId();
+            String otherUserName = uasClient.getUserProfile(otherUserId);
+            String listingTitle = lmsClient.getListingSummary(room.getListingId());
+            
+            return new ChatRoomDTO(
+                    room.getId(),
+                    room.getTenantId(),
+                    room.getLandlordId(),
+                    room.getListingId(),
+                    otherUserName != null ? otherUserName : "對方",
+                    listingTitle != null ? listingTitle : "租屋對話"
+            );
+        }).collect(Collectors.toList());
     }
 
     public List<Message> getMessages(String chatRoomId, String userId) {

@@ -22,6 +22,7 @@ class ChatServiceTest {
     private ChatRoomRepository chatRoomRepository;
     private MessageRepository messageRepository;
     private LmsClient lmsClient;
+    private com.riap.pbi.rcs.port.UasClient uasClient;
     private MessageBroadcaster messageBroadcaster;
     private ChatService chatService;
 
@@ -30,8 +31,9 @@ class ChatServiceTest {
         chatRoomRepository = mock(ChatRoomRepository.class);
         messageRepository = mock(MessageRepository.class);
         lmsClient = mock(LmsClient.class);
+        uasClient = mock(com.riap.pbi.rcs.port.UasClient.class);
         messageBroadcaster = mock(MessageBroadcaster.class);
-        chatService = new ChatService(chatRoomRepository, messageRepository, lmsClient, messageBroadcaster);
+        chatService = new ChatService(chatRoomRepository, messageRepository, lmsClient, uasClient, messageBroadcaster);
     }
 
     @Test
@@ -70,5 +72,30 @@ class ChatServiceTest {
         assertEquals("msg-1", msgId);
 
         verify(messageBroadcaster).broadcastToRoom(eq("room-1"), any(Message.class));
+    }
+
+    @Test
+    void testGetUserChatRooms() {
+        ChatRoom room1 = ChatRoom.rehydrate("room-1", "tenant-1", "landlord-1", "list-1");
+        ChatRoom room2 = ChatRoom.rehydrate("room-2", "tenant-2", "landlord-1", "list-2");
+        when(chatRoomRepository.findByUserId("landlord-1")).thenReturn(Arrays.asList(room1, room2));
+        
+        when(lmsClient.getListingSummary("list-1")).thenReturn("Listing Title 1");
+        when(lmsClient.getListingSummary("list-2")).thenReturn("Listing Title 2");
+        
+        when(uasClient.getUserProfile("tenant-1")).thenReturn("Alice");
+        when(uasClient.getUserProfile("tenant-2")).thenReturn("Bob");
+
+        List<com.riap.pbi.rcs.domain.ChatRoomDTO> result = chatService.getUserChatRooms("landlord-1");
+        
+        assertEquals(2, result.size());
+        
+        assertEquals("room-1", result.get(0).getId());
+        assertEquals("Alice", result.get(0).getOtherUserName());
+        assertEquals("Listing Title 1", result.get(0).getListingTitle());
+        
+        assertEquals("room-2", result.get(1).getId());
+        assertEquals("Bob", result.get(1).getOtherUserName());
+        assertEquals("Listing Title 2", result.get(1).getListingTitle());
     }
 }

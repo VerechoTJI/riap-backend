@@ -79,7 +79,7 @@ public class ChatRestController {
     }
 
     @GetMapping("/rooms")
-    public ResponseEntity<List<ChatRoom>> getRooms(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<List<com.riap.pbi.rcs.domain.ChatRoomDTO>> getRooms(@RequestHeader("Authorization") String authHeader) {
         String userId = getUserId(authHeader);
         return ResponseEntity.ok(chatService.getUserChatRooms(userId));
     }

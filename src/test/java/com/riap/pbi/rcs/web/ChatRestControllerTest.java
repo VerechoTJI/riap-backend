@@ -76,4 +76,19 @@ class ChatRestControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.messageId").value("msg-1"));
     }
+
+    @Test
+    void testGetRooms() throws Exception {
+        com.riap.pbi.rcs.domain.ChatRoomDTO dto = new com.riap.pbi.rcs.domain.ChatRoomDTO(
+                "room-1", "tenant-1", "landlord-1", "list-1", "Alice", "Beautiful Apartment"
+        );
+        when(chatService.getUserChatRooms("tenant-1")).thenReturn(java.util.Collections.singletonList(dto));
+
+        mockMvc.perform(get("/api/chat/rooms")
+                .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value("room-1"))
+                .andExpect(jsonPath("$[0].otherUserName").value("Alice"))
+                .andExpect(jsonPath("$[0].listingTitle").value("Beautiful Apartment"));
+    }
 }
