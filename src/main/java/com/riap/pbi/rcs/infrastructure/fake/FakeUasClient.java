@@ -12,13 +12,9 @@ public class FakeUasClient implements UasClient {
     private final Map<String, String> users = new HashMap<>();
     
     public FakeUasClient() {
-        users.put("1", "Alice Chen");
-        users.put("2", "Bob Wang");
-        users.put("3", "系統管理員");
-        
-        // Keep old ones just in case
-        users.put("tenant-1", "Alice Chen");
-        users.put("landlord-1", "Bob Wang");
+        users.put("00000000-0000-0000-0000-000000000001", "Alice Chen");
+        users.put("00000000-0000-0000-0000-000000000002", "Bob Wang");
+        users.put("00000000-0000-0000-0000-000000000003", "系統管理員");
     }
     
     @Override
