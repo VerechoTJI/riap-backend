@@ -1,0 +1,110 @@
+package com.riap.pbi.rcs.web;
+
+import com.riap.pbi.rcs.domain.Message;
+import com.riap.pbi.rcs.port.AuthenticationProvider;
+import com.riap.pbi.rcs.port.MessageBroadcaster;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Map;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Component
+public class ChatWebSocketHandler extends TextWebSocketHandler implements MessageBroadcaster {
+
+    private final AuthenticationProvider authenticationProvider;
+    private final ObjectMapper objectMapper;
+
+    // userId -> session
+    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+
+    public ChatWebSocketHandler(AuthenticationProvider authenticationProvider, ObjectMapper objectMapper) {
+        this.authenticationProvider = authenticationProvider;
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        String token = extractTokenFromSession(session);
+        String userId = authenticationProvider.validateTokenAndGetUserId(token);
+        
+        if (userId == null) {
+            session.close(CloseStatus.NOT_ACCEPTABLE.withReason("Unauthorized"));
+            return;
+        }
+
+        sessions.put(userId, session);
+        session.sendMessage(new TextMessage("{\"connectionStatus\":\"CONNECTED\"}"));
+    }
+
+    @Override
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        // SDD uses POST /api/chat/sendMessage
+    }
+
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        sessions.values().remove(session);
+    }
+
+    private String extractTokenFromSession(WebSocketSession session) {
+        String query = session.getUri().getQuery();
+        if (query != null && query.contains("token=")) {
+            String[] params = query.split("&");
+            for (String param : params) {
+                if (param.startsWith("token=")) {
+                    return param.substring(6);
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void broadcastToRoom(String chatRoomId, Message message) {
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("chatRoomId", chatRoomId);
+            map.put("content", message.getContent());
+            String payload = objectMapper.writeValueAsString(map);
+
+            sessions.values().forEach(session -> {
+                try {
+                    if (session.isOpen()) {
+                        session.sendMessage(new TextMessage(payload));
+                    }
+                } catch (Exception e) {
+                    // ignore
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    @Override
+    public void notifyReadReceipt(String chatRoomId, String readerId) {
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("chatRoomId", chatRoomId);
+            map.put("readBy", readerId);
+            String payload = objectMapper.writeValueAsString(map);
+
+            sessions.values().forEach(session -> {
+                try {
+                    if (session.isOpen()) {
+                        session.sendMessage(new TextMessage(payload));
+                    }
+                } catch (Exception e) {
+                    // ignore
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
