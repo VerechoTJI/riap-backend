@@ -29,6 +29,9 @@ class ListingSearchControllerTest {
     @MockBean
     private ListingSearchService listingSearchService;
 
+    @MockBean
+    private com.riap.user.domain.repository.UserAccountRepository userAccountRepository;
+
     @Test
     void getListingsReturns200WithEmptyArray() throws Exception {
         when(listingSearchService.search(argThat(f -> f != null))).thenReturn(List.of());

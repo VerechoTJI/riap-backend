@@ -30,9 +30,11 @@ public record ListingResponse(
         LocalDate availableFrom,
         LocalDateTime postedAt,
         String imageUrl,
-        ListingStatus status
+        ListingStatus status,
+        String landlordId,
+        String landlordName
 ) {
-    public static ListingResponse from(ListingEntity l) {
+    public static ListingResponse from(ListingEntity l, String landlordName) {
         long rentCents = l.getFeeDisclosure() != null && l.getFeeDisclosure().getRent() != null 
             ? l.getFeeDisclosure().getRent().multiply(new BigDecimal(100)).longValue() : 0;
         long depositCents = l.getFeeDisclosure() != null && l.getFeeDisclosure().getDeposit() != null 
@@ -62,7 +64,13 @@ public record ListingResponse(
                 l.getAvailableFrom(),
                 l.getPostedAt(),
                 l.getImageUrl(),
-                l.getStatus()
+                l.getStatus(),
+                l.getLandlordId() != null ? l.getLandlordId().toString() : null,
+                landlordName
         );
+    }
+    
+    public static ListingResponse from(ListingEntity l) {
+        return from(l, "房東");
     }
 }

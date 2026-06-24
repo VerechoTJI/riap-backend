@@ -15,14 +15,18 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import com.riap.user.domain.repository.UserAccountRepository;
+
 @RestController
 @RequestMapping("/api/listings")
 public class ListingSearchController {
 
     private final ListingSearchService listingSearchService;
+    private final UserAccountRepository userAccountRepository;
 
-    public ListingSearchController(ListingSearchService listingSearchService) {
+    public ListingSearchController(ListingSearchService listingSearchService, UserAccountRepository userAccountRepository) {
         this.listingSearchService = listingSearchService;
+        this.userAccountRepository = userAccountRepository;
     }
 
     @GetMapping
@@ -64,7 +68,16 @@ public class ListingSearchController {
 
         List<ListingResponse> listings = listingSearchService.search(filter)
                 .stream()
-                .map(ListingResponse::from)
+                .map(entity -> {
+                    String landlordName = "房東";
+                    if (entity.getLandlordId() != null) {
+                        landlordName = userAccountRepository.findById(entity.getLandlordId())
+                                .map(com.riap.user.domain.model.UserAccountEntity::getLoginIdentifier)
+                                .map(name -> name.substring(0, 1).toUpperCase() + name.substring(1))
+                                .orElse("房東");
+                    }
+                    return ListingResponse.from(entity, landlordName);
+                })
                 .toList();
 
         return ResponseEntity.ok(Map.of("listings", listings));
@@ -74,7 +87,14 @@ public class ListingSearchController {
     public ResponseEntity<ListingResponse> getById(@PathVariable(name = "id") UUID id) {
         try {
             com.riap.listing.domain.model.ListingEntity entity = listingSearchService.findById(id);
-            return ResponseEntity.ok(ListingResponse.from(entity));
+            String landlordName = "房東";
+            if (entity.getLandlordId() != null) {
+                landlordName = userAccountRepository.findById(entity.getLandlordId())
+                        .map(com.riap.user.domain.model.UserAccountEntity::getLoginIdentifier)
+                        .map(name -> name.substring(0, 1).toUpperCase() + name.substring(1))
+                        .orElse("房東");
+            }
+            return ResponseEntity.ok(ListingResponse.from(entity, landlordName));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
