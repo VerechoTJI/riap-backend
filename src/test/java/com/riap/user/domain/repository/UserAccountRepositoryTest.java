@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,5 +53,26 @@ class UserAccountRepositoryTest {
 
         assertThatThrownBy(() -> userAccounts.saveAndFlush(account("dup@example.com")))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    /** STD DBMS-TC01 (DBMS-F-02): create, read, update and delete all succeed. */
+    @Test
+    void createReadUpdateDelete() {
+        // Create
+        UserAccountEntity saved = userAccounts.save(account("crud@example.com"));
+        UUID id = saved.getId();
+        assertNotNull(id);
+
+        // Read
+        assertTrue(userAccounts.findById(id).isPresent());
+
+        // Update
+        saved.setStatus(UserStatus.LOCKED);
+        userAccounts.saveAndFlush(saved);
+        assertEquals(UserStatus.LOCKED, userAccounts.findById(id).orElseThrow().getStatus());
+
+        // Delete
+        userAccounts.deleteById(id);
+        assertFalse(userAccounts.findById(id).isPresent());
     }
 }
