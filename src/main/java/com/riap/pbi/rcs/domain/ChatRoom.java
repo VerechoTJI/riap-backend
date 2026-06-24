@@ -4,22 +4,22 @@ import java.util.UUID;
 
 public final class ChatRoom {
     private final String id;
-    private final String tenantId;
-    private final String landlordId;
+    private final UUID tenantId;
+    private final UUID landlordId;
     private final String listingId;
 
-    private ChatRoom(String id, String tenantId, String landlordId, String listingId) {
+    private ChatRoom(String id, UUID tenantId, UUID landlordId, String listingId) {
         this.id = id;
         this.tenantId = tenantId;
         this.landlordId = landlordId;
         this.listingId = listingId;
     }
 
-    public static ChatRoom create(String tenantId, String landlordId, String listingId) {
+    public static ChatRoom create(UUID tenantId, UUID landlordId, String listingId) {
         return new ChatRoom(UUID.randomUUID().toString(), tenantId, landlordId, listingId);
     }
 
-    public static ChatRoom rehydrate(String id, String tenantId, String landlordId, String listingId) {
+    public static ChatRoom rehydrate(String id, UUID tenantId, UUID landlordId, String listingId) {
         return new ChatRoom(id, tenantId, landlordId, listingId);
     }
 
@@ -27,11 +27,11 @@ public final class ChatRoom {
         return id;
     }
 
-    public String getTenantId() {
+    public UUID getTenantId() {
         return tenantId;
     }
 
-    public String getLandlordId() {
+    public UUID getLandlordId() {
         return landlordId;
     }
 

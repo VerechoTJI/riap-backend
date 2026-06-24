@@ -3,8 +3,12 @@ package com.riap.listing.infrastructure.rest;
 import com.riap.listing.application.service.ListingService;
 import com.riap.listing.domain.model.ListingEntity;
 import com.riap.listing.domain.model.ListingStatus;
+import com.riap.user.domain.model.UserRole;
+import com.riap.user.security.AuthenticatedUser;
+import com.riap.user.security.RequireRole;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,11 +23,14 @@ public class ListingController {
     private final ListingService listingService;
 
     @PostMapping
-    public ResponseEntity<ListingEntity> publish(@RequestBody ListingEntity listing) {
+    @RequireRole(UserRole.LANDLORD)
+    public ResponseEntity<ListingEntity> publish(@RequestBody ListingEntity listing, @RequestAttribute(name = AuthenticatedUser.ATTRIBUTE) AuthenticatedUser user) {
+        listing.setLandlordId(user.userId());
         return ResponseEntity.ok(listingService.publishListing(listing));
     }
 
     @GetMapping("/pending")
+    @RequireRole(UserRole.ADMIN)
     public ResponseEntity<List<ListingEntity>> getPending() {
         return ResponseEntity.ok(listingService.getPendingListings());
     }
@@ -34,27 +41,38 @@ public class ListingController {
     }
 
     @GetMapping("/landlord/{landlordId}")
-    public ResponseEntity<List<ListingEntity>> getByLandlord(@PathVariable String landlordId) {
+    @RequireRole({UserRole.LANDLORD, UserRole.ADMIN})
+    public ResponseEntity<List<ListingEntity>> getByLandlord(@PathVariable UUID landlordId, @RequestAttribute(name = AuthenticatedUser.ATTRIBUTE) AuthenticatedUser user) {
+        if (user.role() == UserRole.LANDLORD && !user.userId().equals(landlordId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(listingService.getListingsByLandlordId(landlordId));
     }
 
     @PatchMapping("/{id}/review")
+    @RequireRole(UserRole.ADMIN)
     public ResponseEntity<ListingEntity> review(@PathVariable UUID id, @RequestBody ReviewRequest request) {
         return ResponseEntity.ok(listingService.reviewListing(id, request.getStatus(), request.getReason()));
     }
 
     @PatchMapping("/{id}/unpublish")
+    @RequireRole({UserRole.LANDLORD, UserRole.ADMIN})
     public ResponseEntity<ListingEntity> unpublish(@PathVariable UUID id) {
         return ResponseEntity.ok(listingService.unpublishListing(id));
     }
 
     @PatchMapping("/{id}/resubmit")
+    @RequireRole(UserRole.LANDLORD)
     public ResponseEntity<ListingEntity> resubmit(@PathVariable UUID id) {
         return ResponseEntity.ok(listingService.resubmitListing(id));
     }
 
     @PatchMapping("/bulk-unpublish/{landlordId}")
-    public ResponseEntity<Void> bulkUnpublish(@PathVariable String landlordId) {
+    @RequireRole({UserRole.LANDLORD, UserRole.ADMIN})
+    public ResponseEntity<Void> bulkUnpublish(@PathVariable UUID landlordId, @RequestAttribute(name = AuthenticatedUser.ATTRIBUTE) AuthenticatedUser user) {
+        if (user.role() == UserRole.LANDLORD && !user.userId().equals(landlordId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         listingService.unpublishAllByLandlord(landlordId);
         return ResponseEntity.ok().build();
     }

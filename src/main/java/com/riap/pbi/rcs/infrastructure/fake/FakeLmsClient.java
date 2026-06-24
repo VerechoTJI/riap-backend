@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.UUID;
+
 @Component
 public class FakeLmsClient implements LmsClient {
     private final Map<String, String> titles = new HashMap<>();
@@ -21,13 +23,16 @@ public class FakeLmsClient implements LmsClient {
     }
 
     @Override
-    public String getLandlordIdForListing(String listingId) {
+    public UUID getLandlordIdForListing(String listingId) {
         // In the prototype, Bob Wang is landlord with id "2".
-        return "2";
+        return UUID.fromString("00000000-0000-0000-0000-000000000002");
     }
 
     @Override
-    public String getListingSummary(String listingId) {
-        return titles.getOrDefault(listingId, "Fake Listing Summary for " + listingId);
+    public Map<String, Object> getListingSummary(String listingId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("title", titles.getOrDefault(listingId, "Fake Listing Summary for " + listingId));
+        map.put("landlordId", UUID.fromString("00000000-0000-0000-0000-000000000002"));
+        return map;
     }
 }

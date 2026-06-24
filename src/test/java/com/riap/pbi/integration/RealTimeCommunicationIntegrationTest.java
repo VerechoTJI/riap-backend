@@ -20,10 +20,14 @@ import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.core.ParameterizedTypeReference;
 
+import com.riap.user.domain.model.UserRole;
+import com.riap.user.security.JwtService;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -42,9 +46,21 @@ public class RealTimeCommunicationIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // We rely on FakeUasClient -> token is simply userId.
-    private final String TENANT_TOKEN = "tenant1";
-    private final String LANDLORD_TOKEN = "2";
+    @Autowired
+    private JwtService jwtService;
+
+    private String TENANT_TOKEN;
+    private String LANDLORD_TOKEN;
+    private UUID tenantId;
+    private UUID landlordId;
+
+    @BeforeEach
+    void setup() {
+        tenantId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        landlordId = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        TENANT_TOKEN = jwtService.generateToken(tenantId, UserRole.TENANT);
+        LANDLORD_TOKEN = jwtService.generateToken(landlordId, UserRole.LANDLORD);
+    }
 
     private HttpHeaders createHeaders(String token) {
         HttpHeaders headers = new HttpHeaders();
@@ -68,7 +84,7 @@ public class RealTimeCommunicationIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("chatroomId")).isNotNull();
-        assertThat(response.getBody().get("landlordId")).isEqualTo("2"); // FakeLmsClient returns 2
+        assertThat(response.getBody().get("landlordId")).isEqualTo("00000000-0000-0000-0000-000000000002"); // FakeLmsClient returns 2
     }
 
     // [RCS-TC02] WebSocket 連線驗證測試 & [RCS-TC05] 身份綁定與認證攔截測試
@@ -253,7 +269,7 @@ public class RealTimeCommunicationIntegrationTest {
         // Tenant should receive read receipt via WS
         String receipt = readReceiptMessage.get(5, TimeUnit.SECONDS);
         assertThat(receipt).contains("readBy");
-        assertThat(receipt).contains(LANDLORD_TOKEN);
+        assertThat(receipt).contains(landlordId.toString());
 
         landlordSession.close();
     }

@@ -1,32 +1,39 @@
 package com.riap.pbi.rcs.domain;
 
 import org.junit.jupiter.api.Test;
+import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ChatRoomTest {
 
     @Test
     void testCreateChatRoom() {
-        ChatRoom chatRoom = ChatRoom.create("tenant-1", "landlord-2", "listing-3");
+        UUID tenantId = UUID.randomUUID();
+        UUID landlordId = UUID.randomUUID();
+        ChatRoom chatRoom = ChatRoom.create(tenantId, landlordId, "listing-3");
         assertNotNull(chatRoom.getId());
-        assertEquals("tenant-1", chatRoom.getTenantId());
-        assertEquals("landlord-2", chatRoom.getLandlordId());
+        assertEquals(tenantId, chatRoom.getTenantId());
+        assertEquals(landlordId, chatRoom.getLandlordId());
         assertEquals("listing-3", chatRoom.getListingId());
     }
 
     @Test
     void testCreateChatRoom_NullListingId_Allowed() {
-        ChatRoom chatRoom = ChatRoom.create("tenant-1", "landlord-2", null);
+        UUID tenantId = UUID.randomUUID();
+        UUID landlordId = UUID.randomUUID();
+        ChatRoom chatRoom = ChatRoom.create(tenantId, landlordId, null);
         assertNotNull(chatRoom.getId());
         assertNull(chatRoom.getListingId());
     }
 
     @Test
     void testRehydrate() {
-        ChatRoom chatRoom = ChatRoom.rehydrate("room-1", "tenant-1", "landlord-2", "listing-3");
+        UUID tenantId = UUID.randomUUID();
+        UUID landlordId = UUID.randomUUID();
+        ChatRoom chatRoom = ChatRoom.rehydrate("room-1", tenantId, landlordId, "listing-3");
         assertEquals("room-1", chatRoom.getId());
-        assertEquals("tenant-1", chatRoom.getTenantId());
-        assertEquals("landlord-2", chatRoom.getLandlordId());
+        assertEquals(tenantId, chatRoom.getTenantId());
+        assertEquals(landlordId, chatRoom.getLandlordId());
         assertEquals("listing-3", chatRoom.getListingId());
     }
 }

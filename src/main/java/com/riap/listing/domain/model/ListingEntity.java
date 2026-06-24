@@ -50,6 +50,6 @@ public class ListingEntity {
     private LocalDateTime postedAt;
     private String imageUrl;
 
-    private String landlordId;
+    private UUID landlordId;
     private String returnReason;
 }

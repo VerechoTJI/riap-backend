@@ -9,8 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -34,29 +36,29 @@ public class ChatRestController {
         return authHeader;
     }
 
-    private String getUserId(String authHeader) {
+    private UUID getUserId(String authHeader) {
         String token = extractToken(authHeader);
         String userId = authenticationProvider.validateTokenAndGetUserId(token);
         if (userId == null) {
             throw new RuntimeException("Unauthorized");
         }
-        return userId;
+        return UUID.fromString(userId);
     }
 
     @PostMapping("/createChatRoom")
     public ResponseEntity<Map<String, Object>> createChatRoom(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody Map<String, String> request) {
-        String tenantId = getUserId(authHeader);
+        UUID tenantId = getUserId(authHeader);
         String listingId = request.get("listingId");
         
-        String landlordId = lmsClient.getLandlordIdForListing(listingId);
+        UUID landlordId = lmsClient.getLandlordIdForListing(listingId);
 
         ChatRoom chatRoom = chatService.createOrGetRoom(tenantId, landlordId, listingId);
 
         Map<String, Object> response = new HashMap<>();
         response.put("chatroomId", chatRoom.getId());
-        response.put("landlordId", chatRoom.getLandlordId());
+        response.put("landlordId", chatRoom.getLandlordId().toString());
 
         return ResponseEntity.ok(response);
     }
@@ -65,7 +67,7 @@ public class ChatRestController {
     public ResponseEntity<Map<String, Object>> sendMessage(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody Map<String, String> request) {
-        String senderId = getUserId(authHeader);
+        UUID senderId = getUserId(authHeader);
         String chatRoomId = request.get("chatRoomId");
         String content = request.get("content");
 
@@ -80,7 +82,7 @@ public class ChatRestController {
 
     @GetMapping("/rooms")
     public ResponseEntity<List<com.riap.pbi.rcs.domain.ChatRoomDTO>> getRooms(@RequestHeader("Authorization") String authHeader) {
-        String userId = getUserId(authHeader);
+        UUID userId = getUserId(authHeader);
         return ResponseEntity.ok(chatService.getUserChatRooms(userId));
     }
 
@@ -88,7 +90,7 @@ public class ChatRestController {
     public ResponseEntity<List<Message>> getHistory(
             @RequestHeader("Authorization") String authHeader,
             @PathVariable("roomId") String roomId) {
-        String userId = getUserId(authHeader);
+        UUID userId = getUserId(authHeader);
         return ResponseEntity.ok(chatService.getMessages(roomId, userId));
     }
 
@@ -96,14 +98,14 @@ public class ChatRestController {
     public ResponseEntity<Void> markAsRead(
             @RequestHeader("Authorization") String authHeader,
             @PathVariable("roomId") String roomId) {
-        String userId = getUserId(authHeader);
+        UUID userId = getUserId(authHeader);
         chatService.markMessagesAsRead(roomId, userId);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/hasUnread")
     public ResponseEntity<Boolean> hasUnread(@RequestHeader("Authorization") String authHeader) {
-        String userId = getUserId(authHeader);
+        UUID userId = getUserId(authHeader);
         return ResponseEntity.ok(chatService.hasGlobalUnread(userId));
     }
 }

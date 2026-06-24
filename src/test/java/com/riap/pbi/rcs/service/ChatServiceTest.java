@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
+import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -38,37 +39,44 @@ class ChatServiceTest {
 
     @Test
     void testCreateOrGetRoom() {
-        ChatRoom mockedRoom = ChatRoom.rehydrate("room-1", "tenant-1", "landlord-1", "list-1");
-        when(chatRoomRepository.addChatSession("tenant-1", "landlord-1", "list-1")).thenReturn(mockedRoom);
+        UUID tenantId = UUID.randomUUID();
+        UUID landlordId = UUID.randomUUID();
+        ChatRoom mockedRoom = ChatRoom.rehydrate("room-1", tenantId, landlordId, "list-1");
+        when(chatRoomRepository.addChatSession(tenantId, landlordId, "list-1")).thenReturn(mockedRoom);
 
-        ChatRoom result = chatService.createOrGetRoom("tenant-1", "landlord-1", "list-1");
+        ChatRoom result = chatService.createOrGetRoom(tenantId, landlordId, "list-1");
         assertNotNull(result);
         assertEquals("room-1", result.getId());
     }
 
     @Test
     void testSaveAndBroadcastMessage() {
-        Message mockedMsg = Message.rehydrate("msg-1", "room-1", "tenant-1", "Hello", Instant.now(), false);
-        when(messageRepository.addMessageRecord("room-1", "tenant-1", "Hello")).thenReturn(mockedMsg);
+        UUID tenantId = UUID.randomUUID();
+        Message mockedMsg = Message.rehydrate("msg-1", "room-1", tenantId, "Hello", Instant.now(), false);
+        when(messageRepository.addMessageRecord("room-1", tenantId, "Hello")).thenReturn(mockedMsg);
 
-        Message result = chatService.saveAndBroadcastMessage("room-1", "tenant-1", "Hello");
+        Message result = chatService.saveAndBroadcastMessage("room-1", tenantId, "Hello");
         assertNotNull(result);
         assertEquals("msg-1", result.getId());
 
-        verify(messageRepository).addMessageRecord("room-1", "tenant-1", "Hello");
+        verify(messageRepository).addMessageRecord("room-1", tenantId, "Hello");
         verify(messageBroadcaster).broadcastToRoom("room-1", mockedMsg);
     }
 
     @Test
     void testSendQuotedMessage() {
-        ChatRoom mockedRoom = ChatRoom.rehydrate("room-1", "tenant-1", "landlord-1", "list-1");
-        when(chatRoomRepository.addChatSession("tenant-1", "landlord-1", "list-1")).thenReturn(mockedRoom);
-        when(lmsClient.getListingSummary("list-1")).thenReturn("Beautiful Apartment");
+        UUID tenantId = UUID.randomUUID();
+        UUID landlordId = UUID.randomUUID();
+        ChatRoom mockedRoom = ChatRoom.rehydrate("room-1", tenantId, landlordId, "list-1");
+        when(chatRoomRepository.addChatSession(tenantId, landlordId, "list-1")).thenReturn(mockedRoom);
+        java.util.Map<String, Object> summaryMap = new java.util.HashMap<>();
+        summaryMap.put("title", "Beautiful Apartment");
+        when(lmsClient.getListingSummary("list-1")).thenReturn(summaryMap);
 
-        Message mockedMsg = Message.rehydrate("msg-1", "room-1", "tenant-1", "Hi Landlord, I'm interested in: Beautiful Apartment", Instant.now(), false);
-        when(messageRepository.addMessageRecord(eq("room-1"), eq("tenant-1"), anyString())).thenReturn(mockedMsg);
+        Message mockedMsg = Message.rehydrate("msg-1", "room-1", tenantId, "Hi Landlord, I'm interested in: Beautiful Apartment", Instant.now(), false);
+        when(messageRepository.addMessageRecord(eq("room-1"), eq(tenantId), anyString())).thenReturn(mockedMsg);
 
-        String msgId = chatService.sendQuotedMessage("tenant-1", "landlord-1", "list-1");
+        String msgId = chatService.sendQuotedMessage(tenantId, landlordId, "list-1");
         assertEquals("msg-1", msgId);
 
         verify(messageBroadcaster).broadcastToRoom(eq("room-1"), any(Message.class));
@@ -76,18 +84,27 @@ class ChatServiceTest {
 
     @Test
     void testGetUserChatRooms() {
-        ChatRoom room1 = ChatRoom.rehydrate("room-1", "tenant-1", "landlord-1", "list-1");
-        ChatRoom room2 = ChatRoom.rehydrate("room-2", "tenant-2", "landlord-1", "list-2");
-        when(chatRoomRepository.findByUserId("landlord-1")).thenReturn(Arrays.asList(room1, room2));
-        when(uasClient.getUserProfile("tenant-1")).thenReturn("Alice");
-        when(uasClient.getUserProfile("tenant-2")).thenReturn("Bob");
-        when(lmsClient.getListingSummary("list-1")).thenReturn("Listing 1");
-        when(lmsClient.getListingSummary("list-2")).thenReturn("Listing 2");
+        UUID tenantId1 = UUID.randomUUID();
+        UUID tenantId2 = UUID.randomUUID();
+        UUID landlordId = UUID.randomUUID();
+        ChatRoom room1 = ChatRoom.rehydrate("room-1", tenantId1, landlordId, "list-1");
+        ChatRoom room2 = ChatRoom.rehydrate("room-2", tenantId2, landlordId, "list-2");
+        when(chatRoomRepository.findByUserId(landlordId)).thenReturn(Arrays.asList(room1, room2));
+        when(uasClient.getUserProfile(tenantId1.toString())).thenReturn("Alice");
+        when(uasClient.getUserProfile(tenantId2.toString())).thenReturn("Bob");
         
-        when(messageRepository.hasUnreadMessages("room-1", "landlord-1")).thenReturn(true);
-        when(messageRepository.hasUnreadMessages("room-2", "landlord-1")).thenReturn(false);
+        java.util.Map<String, Object> summaryMap1 = new java.util.HashMap<>();
+        summaryMap1.put("title", "Listing 1");
+        when(lmsClient.getListingSummary("list-1")).thenReturn(summaryMap1);
+        
+        java.util.Map<String, Object> summaryMap2 = new java.util.HashMap<>();
+        summaryMap2.put("title", "Listing 2");
+        when(lmsClient.getListingSummary("list-2")).thenReturn(summaryMap2);
+        
+        when(messageRepository.hasUnreadMessages("room-1", landlordId)).thenReturn(true);
+        when(messageRepository.hasUnreadMessages("room-2", landlordId)).thenReturn(false);
 
-        List<com.riap.pbi.rcs.domain.ChatRoomDTO> result = chatService.getUserChatRooms("landlord-1");
+        List<com.riap.pbi.rcs.domain.ChatRoomDTO> result = chatService.getUserChatRooms(landlordId);
         
         assertEquals(2, result.size());
         
@@ -102,10 +119,11 @@ class ChatServiceTest {
 
     @Test
     void testHasGlobalUnread() {
-        when(messageRepository.hasAnyUnreadMessages("user-1")).thenReturn(true);
-        assertTrue(chatService.hasGlobalUnread("user-1"));
+        UUID userId = UUID.randomUUID();
+        when(messageRepository.hasAnyUnreadMessages(userId)).thenReturn(true);
+        assertTrue(chatService.hasGlobalUnread(userId));
         
-        when(messageRepository.hasAnyUnreadMessages("user-1")).thenReturn(false);
-        assertFalse(chatService.hasGlobalUnread("user-1"));
+        when(messageRepository.hasAnyUnreadMessages(userId)).thenReturn(false);
+        assertFalse(chatService.hasGlobalUnread(userId));
     }
 }

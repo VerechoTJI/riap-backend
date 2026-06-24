@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class MessagePersistenceAdapter implements MessageRepository {
@@ -15,7 +17,7 @@ public class MessagePersistenceAdapter implements MessageRepository {
     private final JpaMessageRepository jpaRepository;
 
     @Override
-    public Message addMessageRecord(String chatRoomId, String senderUserId, String content) {
+    public Message addMessageRecord(String chatRoomId, UUID senderUserId, String content) {
         Message message = Message.create(chatRoomId, senderUserId, content);
         ChatMessageEntity entity = ChatMessageEntity.builder()
                 .id(message.getId())
@@ -38,7 +40,7 @@ public class MessagePersistenceAdapter implements MessageRepository {
     }
     
     @Override
-    public void markAsRead(String chatRoomId, String recipientId) {
+    public void markAsRead(String chatRoomId, UUID recipientId) {
         List<ChatMessageEntity> unreadMessages = jpaRepository.findByChatRoomIdOrderBySentAtAsc(chatRoomId)
                 .stream()
                 .filter(m -> !m.isRead() && !m.getSenderUserId().equals(recipientId))
@@ -48,13 +50,13 @@ public class MessagePersistenceAdapter implements MessageRepository {
     }
 
     @Override
-    public boolean hasUnreadMessages(String chatRoomId, String userId) {
+    public boolean hasUnreadMessages(String chatRoomId, UUID userId) {
         return jpaRepository.findByChatRoomIdOrderBySentAtAsc(chatRoomId).stream()
                 .anyMatch(m -> !m.isRead() && !m.getSenderUserId().equals(userId));
     }
 
     @Override
-    public boolean hasAnyUnreadMessages(String userId) {
+    public boolean hasAnyUnreadMessages(UUID userId) {
         // Since we don't have a direct query in JpaMessageRepository, we'll fetch chat rooms or we need a custom query
         // For simplicity, we can just throw UnsupportedOperationException if it's not used, or implement a proper query.
         // Actually, we can just add a query method to the JPA repo, but for now we'll do a naive approach.

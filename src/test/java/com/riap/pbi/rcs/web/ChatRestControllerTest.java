@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 
+import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -41,14 +42,16 @@ class ChatRestControllerTest {
 
     @BeforeEach
     void setUp() {
-        when(authenticationProvider.validateTokenAndGetUserId(any())).thenReturn("tenant-1");
+        when(authenticationProvider.validateTokenAndGetUserId(any())).thenReturn("00000000-0000-0000-0000-000000000001");
     }
 
     @Test
     void testCreateChatRoom() throws Exception {
-        ChatRoom room = ChatRoom.rehydrate("room-1", "tenant-1", "landlord-1", "list-1");
-        when(lmsClient.getLandlordIdForListing("list-1")).thenReturn("landlord-1");
-        when(chatService.createOrGetRoom("tenant-1", "landlord-1", "list-1")).thenReturn(room);
+        UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID landlordId = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        ChatRoom room = ChatRoom.rehydrate("room-1", tenantId, landlordId, "list-1");
+        when(lmsClient.getLandlordIdForListing("list-1")).thenReturn(landlordId);
+        when(chatService.createOrGetRoom(tenantId, landlordId, "list-1")).thenReturn(room);
 
         String requestJson = "{\"listingId\":\"list-1\"}";
 
@@ -58,13 +61,14 @@ class ChatRestControllerTest {
                 .content(requestJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.chatroomId").value("room-1"))
-                .andExpect(jsonPath("$.landlordId").value("landlord-1"));
+                .andExpect(jsonPath("$.landlordId").value("00000000-0000-0000-0000-000000000002"));
     }
 
     @Test
     void testSendMessage() throws Exception {
-        Message msg = Message.rehydrate("msg-1", "room-1", "tenant-1", "Hello", Instant.now(), false);
-        when(chatService.saveAndBroadcastMessage("room-1", "tenant-1", "Hello")).thenReturn(msg);
+        UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        Message msg = Message.rehydrate("msg-1", "room-1", tenantId, "Hello", Instant.now(), false);
+        when(chatService.saveAndBroadcastMessage("room-1", tenantId, "Hello")).thenReturn(msg);
 
         String requestJson = "{\"chatRoomId\":\"room-1\",\"content\":\"Hello\"}";
 
@@ -79,10 +83,12 @@ class ChatRestControllerTest {
 
     @Test
     void testGetRooms() throws Exception {
+        UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID landlordId = UUID.fromString("00000000-0000-0000-0000-000000000002");
         com.riap.pbi.rcs.domain.ChatRoomDTO dto = new com.riap.pbi.rcs.domain.ChatRoomDTO(
-                "room-1", "tenant-1", "landlord-1", "list-1", "Alice", "Beautiful Apartment", true
+                "room-1", tenantId, landlordId, "list-1", "Alice", "Beautiful Apartment", true
         );
-        when(chatService.getUserChatRooms("tenant-1")).thenReturn(java.util.Collections.singletonList(dto));
+        when(chatService.getUserChatRooms(tenantId)).thenReturn(java.util.Collections.singletonList(dto));
 
         mockMvc.perform(get("/api/chat/rooms")
                 .header("Authorization", "Bearer valid-token"))
@@ -94,7 +100,8 @@ class ChatRestControllerTest {
 
     @Test
     void testHasUnread() throws Exception {
-        when(chatService.hasGlobalUnread("tenant-1")).thenReturn(true);
+        UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        when(chatService.hasGlobalUnread(tenantId)).thenReturn(true);
         
         mockMvc.perform(get("/api/chat/hasUnread")
                 .header("Authorization", "Bearer valid-token"))

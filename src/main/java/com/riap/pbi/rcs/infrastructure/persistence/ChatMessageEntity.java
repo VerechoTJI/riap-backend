@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "chat_messages")
@@ -21,7 +22,7 @@ public class ChatMessageEntity {
     @Id
     private String id;
     private String chatRoomId;
-    private String senderUserId;
+    private UUID senderUserId;
     private String content;
     private Instant sentAt;
     private boolean isRead;

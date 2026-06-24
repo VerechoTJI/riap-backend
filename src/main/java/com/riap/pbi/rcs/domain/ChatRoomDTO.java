@@ -1,15 +1,17 @@
 package com.riap.pbi.rcs.domain;
 
+import java.util.UUID;
+
 public class ChatRoomDTO {
     private String id;
-    private String tenantId;
-    private String landlordId;
+    private UUID tenantId;
+    private UUID landlordId;
     private String listingId;
     private String otherUserName;
     private String listingTitle;
     private boolean hasUnread;
 
-    public ChatRoomDTO(String id, String tenantId, String landlordId, String listingId, String otherUserName, String listingTitle, boolean hasUnread) {
+    public ChatRoomDTO(String id, UUID tenantId, UUID landlordId, String listingId, String otherUserName, String listingTitle, boolean hasUnread) {
         this.id = id;
         this.tenantId = tenantId;
         this.landlordId = landlordId;
@@ -20,8 +22,8 @@ public class ChatRoomDTO {
     }
 
     public String getId() { return id; }
-    public String getTenantId() { return tenantId; }
-    public String getLandlordId() { return landlordId; }
+    public UUID getTenantId() { return tenantId; }
+    public UUID getLandlordId() { return landlordId; }
     public String getListingId() { return listingId; }
     public String getOtherUserName() { return otherUserName; }
     public String getListingTitle() { return listingTitle; }

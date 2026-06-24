@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -70,7 +71,7 @@ public class ListingService {
     }
 
     @Transactional
-    public void unpublishAllByLandlord(String landlordId) {
+    public void unpublishAllByLandlord(UUID landlordId) {
         List<ListingEntity> listings = listingRepository.findByLandlordId(landlordId);
         listings.stream()
                 .filter(l -> l.getStatus() == ListingStatus.PUBLISHED)
@@ -86,7 +87,7 @@ public class ListingService {
         return listingRepository.findByStatus(ListingStatus.PUBLISHED);
     }
 
-    public List<ListingEntity> getListingsByLandlordId(String landlordId) {
+    public List<ListingEntity> getListingsByLandlordId(UUID landlordId) {
         return listingRepository.findByLandlordId(landlordId);
     }
 }

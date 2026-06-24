@@ -46,7 +46,7 @@ class ListingSearchControllerTest {
                 .id(UUID.randomUUID())
                 .title("台北套房")
                 .feeDisclosure(FeeDisclosure.builder().rent(new BigDecimal("180.00")).build())
-                .landlordId("1")
+                .landlordId(UUID.randomUUID())
                 .city("台北市").propertyType(PropertyType.STUDIO).area(8.0)
                 .status(ListingStatus.PUBLISHED).build();
 
@@ -91,7 +91,7 @@ class ListingSearchControllerTest {
                 .id(id)
                 .title("Apt")
                 .feeDisclosure(FeeDisclosure.builder().rent(new BigDecimal("250.00")).build())
-                .landlordId("1")
+                .landlordId(UUID.randomUUID())
                 .city("新北市").propertyType(PropertyType.APARTMENT).area(20.0)
                 .status(ListingStatus.PUBLISHED).build();
 

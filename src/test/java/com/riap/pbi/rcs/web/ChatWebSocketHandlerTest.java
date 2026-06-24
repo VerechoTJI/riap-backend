@@ -52,7 +52,7 @@ class ChatWebSocketHandlerTest {
 
         handler.afterConnectionEstablished(session);
 
-        Message msg = Message.rehydrate("msg-1", "room-1", "user-2", "Hello Broadcaster", Instant.now(), false);
+        Message msg = Message.rehydrate("msg-1", "room-1", java.util.UUID.randomUUID(), "Hello Broadcaster", Instant.now(), false);
         handler.broadcastToRoom("room-1", msg);
 
         Map<String, Object> expectedMap = new java.util.HashMap<>();

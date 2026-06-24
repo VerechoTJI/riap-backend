@@ -55,7 +55,7 @@ public class ListingSearchIntegrationTest {
                         .managementFee(new BigDecimal("2000.00"))
                         .build())
                 .hasInternet(true).hasFurniture(true).hasAC(true).petFriendly(false)
-                .landlordId("landlord-1")
+                .landlordId(UUID.randomUUID())
                 .build();
         publishedListing1Id = listingRepository.save(l1).getId();
 
@@ -71,7 +71,7 @@ public class ListingSearchIntegrationTest {
                         .managementFee(BigDecimal.ZERO)
                         .build())
                 .hasInternet(false).hasFurniture(true).hasAC(false).petFriendly(true)
-                .landlordId("landlord-2")
+                .landlordId(UUID.randomUUID())
                 .build();
         publishedListing2Id = listingRepository.save(l2).getId();
 

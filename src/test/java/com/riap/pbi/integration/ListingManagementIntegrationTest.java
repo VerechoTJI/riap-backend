@@ -17,7 +17,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.riap.user.domain.model.UserRole;
+import com.riap.user.security.JwtService;
+
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,9 +37,34 @@ public class ListingManagementIntegrationTest {
     @Autowired
     private ListingRepository listingRepository;
 
+    @Autowired
+    private JwtService jwtService;
+
+    private UUID adminId;
+
     @BeforeEach
     void setup() {
         listingRepository.deleteAll();
+        
+        // Generate an ADMIN token to bypass all role checks in these tests easily, or we can just change tokens per request.
+        // Wait, for LMS-TC01 we need landlord, and LMS-TC02 we need admin.
+        // Let's just create a generic interceptor that uses a field `currentToken`.
+        restTemplate.getRestTemplate().setInterceptors(List.of((request, body, execution) -> {
+            if (currentToken != null) {
+                request.getHeaders().add("Authorization", "Bearer " + currentToken);
+            }
+            return execution.execute(request, body);
+        }));
+    }
+
+    private String currentToken;
+
+    private void asRole(UserRole role) {
+        this.currentToken = jwtService.generateToken(UUID.randomUUID(), role);
+    }
+    
+    private void asUser(UUID userId, UserRole role) {
+        this.currentToken = jwtService.generateToken(userId, role);
     }
 
     private FeeDisclosure createValidFeeDisclosure() {
@@ -50,9 +79,11 @@ public class ListingManagementIntegrationTest {
     // [LMS-TC01] 驗證房源刊登與強制費用揭露功能
     @Test
     void testPublishListing_Success() {
+        UUID landlordId = UUID.randomUUID();
+        asUser(landlordId, UserRole.LANDLORD);
         ListingEntity newListing = ListingEntity.builder()
                 .title("新房源")
-                .landlordId("user-123")
+                .landlordId(landlordId)
                 .feeDisclosure(createValidFeeDisclosure())
                 .build();
 
@@ -72,9 +103,11 @@ public class ListingManagementIntegrationTest {
     // [LMS-TC01] 驗證房源刊登與強制費用揭露功能 - 缺少費用
     @Test
     void testPublishListing_MissingFeeDisclosure_Returns500() {
+        UUID landlordId = UUID.randomUUID();
+        asUser(landlordId, UserRole.LANDLORD);
         ListingEntity newListing = ListingEntity.builder()
                 .title("新房源")
-                .landlordId("user-123")
+                .landlordId(landlordId)
                 .build();
 
         // Service throws IllegalArgumentException. In default Spring Boot without ExceptionHandler, it becomes 500.
@@ -86,6 +119,7 @@ public class ListingManagementIntegrationTest {
     // [LMS-TC02] 驗證房源審核與退回機制
     @Test
     void testReviewListing_Approve() {
+        asRole(UserRole.ADMIN);
         ListingEntity listing = listingRepository.save(ListingEntity.builder()
                 .title("Pending Listing")
                 .status(ListingStatus.PENDING)
@@ -111,6 +145,7 @@ public class ListingManagementIntegrationTest {
     // [LMS-TC02] 驗證房源審核與退回機制
     @Test
     void testReviewListing_ReturnWithReason() {
+        asRole(UserRole.ADMIN);
         ListingEntity listing = listingRepository.save(ListingEntity.builder()
                 .title("Pending Listing")
                 .status(ListingStatus.PENDING)
@@ -135,9 +170,11 @@ public class ListingManagementIntegrationTest {
     // [LMS-TC03] 驗證單一房源下架功能
     @Test
     void testUnpublishSingleListing() {
+        UUID landlordId = UUID.randomUUID();
+        asUser(landlordId, UserRole.LANDLORD);
         ListingEntity listing = listingRepository.save(ListingEntity.builder()
                 .title("L1")
-                .landlordId("landlord-1")
+                .landlordId(landlordId)
                 .status(ListingStatus.PUBLISHED)
                 .build());
 
@@ -158,10 +195,12 @@ public class ListingManagementIntegrationTest {
     // [LMS-TC05] 驗證一鍵全部下架功能
     @Test
     void testBulkUnpublish() {
-        String landlordId = "landlord-x";
+        UUID landlordId = UUID.randomUUID();
+        asUser(landlordId, UserRole.LANDLORD);
+        UUID otherId = UUID.randomUUID();
         listingRepository.save(ListingEntity.builder().title("L1").landlordId(landlordId).status(ListingStatus.PUBLISHED).build());
         listingRepository.save(ListingEntity.builder().title("L2").landlordId(landlordId).status(ListingStatus.PUBLISHED).build());
-        listingRepository.save(ListingEntity.builder().title("L3").landlordId("other").status(ListingStatus.PUBLISHED).build());
+        listingRepository.save(ListingEntity.builder().title("L3").landlordId(otherId).status(ListingStatus.PUBLISHED).build());
 
         ResponseEntity<Void> response = restTemplate.exchange(
                 "/api/listings/bulk-unpublish/" + landlordId,
@@ -175,15 +214,18 @@ public class ListingManagementIntegrationTest {
         List<ListingEntity> myAft = listingRepository.findByLandlordId(landlordId);
         assertThat(myAft).allMatch(l -> l.getStatus() == ListingStatus.PRIVATE);
 
-        List<ListingEntity> otherAft = listingRepository.findByLandlordId("other");
+        List<ListingEntity> otherAft = listingRepository.findByLandlordId(otherId);
         assertThat(otherAft).allMatch(l -> l.getStatus() == ListingStatus.PUBLISHED);
     }
 
     // [LMS-TC04] 驗證房源重新送審功能
     @Test
     void testResubmitListing() {
+        UUID landlordId = UUID.randomUUID();
+        asUser(landlordId, UserRole.LANDLORD);
         ListingEntity listing = listingRepository.save(ListingEntity.builder()
                 .title("Returned Listing")
+                .landlordId(landlordId)
                 .status(ListingStatus.RETURNED)
                 .returnReason("Fix photo")
                 .build());

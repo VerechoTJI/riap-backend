@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,7 +23,7 @@ public abstract class MessageRepositoryContractTest {
     void testMarkAsRead_ShouldNotMarkOwnMessages() {
         MessageRepository repository = getRepository();
         String chatRoomId = "room-contract-1";
-        String senderId = "user-1";
+        UUID senderId = UUID.randomUUID();
         
         // Sender sends a message
         repository.addMessageRecord(chatRoomId, senderId, "Hello World");
@@ -42,8 +43,8 @@ public abstract class MessageRepositoryContractTest {
     void testMarkAsRead_ShouldMarkOtherUserMessages() {
         MessageRepository repository = getRepository();
         String chatRoomId = "room-contract-2";
-        String senderId = "user-1";
-        String receiverId = "user-2";
+        UUID senderId = UUID.randomUUID();
+        UUID receiverId = UUID.randomUUID();
         
         // Sender sends a message
         repository.addMessageRecord(chatRoomId, senderId, "Hello World");
@@ -63,37 +64,42 @@ public abstract class MessageRepositoryContractTest {
     void testHasUnreadMessages() {
         MessageRepository repository = getRepository();
         String chatRoomId = "room-unread-1";
+        UUID user1 = UUID.randomUUID();
+        UUID user2 = UUID.randomUUID();
         
         // user-1 sends message to user-2
-        repository.addMessageRecord(chatRoomId, "user-1", "Msg 1");
+        repository.addMessageRecord(chatRoomId, user1, "Msg 1");
         
         // user-2 should have unread messages
-        assertTrue(repository.hasUnreadMessages(chatRoomId, "user-2"));
+        assertTrue(repository.hasUnreadMessages(chatRoomId, user2));
         // user-1 should NOT have unread messages (they sent it)
-        assertFalse(repository.hasUnreadMessages(chatRoomId, "user-1"));
+        assertFalse(repository.hasUnreadMessages(chatRoomId, user1));
         
         // user-2 reads
-        repository.markAsRead(chatRoomId, "user-2");
-        assertFalse(repository.hasUnreadMessages(chatRoomId, "user-2"));
+        repository.markAsRead(chatRoomId, user2);
+        assertFalse(repository.hasUnreadMessages(chatRoomId, user2));
     }
 
     @Test
     void testHasAnyUnreadMessages() {
         MessageRepository repository = getRepository();
+        UUID user1 = UUID.randomUUID();
+        UUID user2 = UUID.randomUUID();
+        UUID user3 = UUID.randomUUID();
         
         // user-1 sends message to user-2 in room A
-        repository.addMessageRecord("room-A", "user-1", "Hello");
+        repository.addMessageRecord("room-A", user1, "Hello");
         
         // user-2 should have unread in ANY room
-        assertTrue(repository.hasAnyUnreadMessages("user-2"));
-        assertFalse(repository.hasAnyUnreadMessages("user-1"));
+        assertTrue(repository.hasAnyUnreadMessages(user2));
+        assertFalse(repository.hasAnyUnreadMessages(user1));
         
         // user-2 reads room A
-        repository.markAsRead("room-A", "user-2");
-        assertFalse(repository.hasAnyUnreadMessages("user-2"));
+        repository.markAsRead("room-A", user2);
+        assertFalse(repository.hasAnyUnreadMessages(user2));
         
         // user-3 sends message to user-2 in room B
-        repository.addMessageRecord("room-B", "user-3", "Hi");
-        assertTrue(repository.hasAnyUnreadMessages("user-2"));
+        repository.addMessageRecord("room-B", user3, "Hi");
+        assertTrue(repository.hasAnyUnreadMessages(user2));
     }
 }

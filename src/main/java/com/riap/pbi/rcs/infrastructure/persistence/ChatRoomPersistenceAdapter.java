@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class ChatRoomPersistenceAdapter implements ChatRoomRepository {
@@ -16,7 +18,7 @@ public class ChatRoomPersistenceAdapter implements ChatRoomRepository {
     private final JpaChatRoomRepository jpaRepository;
 
     @Override
-    public ChatRoom addChatSession(String tenantId, String landlordId, String listingId) {
+    public ChatRoom addChatSession(UUID tenantId, UUID landlordId, String listingId) {
         ChatRoom chatRoom = ChatRoom.create(tenantId, landlordId, listingId);
         
         ChatRoomEntity entity = ChatRoomEntity.builder()
@@ -37,7 +39,7 @@ public class ChatRoomPersistenceAdapter implements ChatRoomRepository {
     }
 
     @Override
-    public List<ChatRoom> findByUserId(String userId) {
+    public List<ChatRoom> findByUserId(UUID userId) {
         return jpaRepository.findByTenantIdOrLandlordId(userId, userId).stream()
                 .map(this::mapToDomain)
                 .collect(Collectors.toList());

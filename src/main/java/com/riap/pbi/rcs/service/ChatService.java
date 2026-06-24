@@ -11,6 +11,9 @@ import com.riap.pbi.rcs.port.UasClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,11 +37,11 @@ public class ChatService {
         this.messageBroadcaster = messageBroadcaster;
     }
 
-    public ChatRoom createOrGetRoom(String tenantId, String landlordId, String listingId) {
+    public ChatRoom createOrGetRoom(UUID tenantId, UUID landlordId, String listingId) {
         return chatRoomRepository.addChatSession(tenantId, landlordId, listingId);
     }
 
-    public Message saveAndBroadcastMessage(String chatRoomId, String senderUserId, String content) {
+    public Message saveAndBroadcastMessage(String chatRoomId, UUID senderUserId, String content) {
         if (content == null || content.trim().isEmpty()) {
             throw new IllegalArgumentException("Message content cannot be empty.");
         }
@@ -47,9 +50,10 @@ public class ChatService {
         return msg;
     }
 
-    public String sendQuotedMessage(String tenantId, String landlordId, String listingId) {
+    public String sendQuotedMessage(UUID tenantId, UUID landlordId, String listingId) {
         ChatRoom room = createOrGetRoom(tenantId, landlordId, listingId);
-        String summary = lmsClient.getListingSummary(listingId);
+        Map<String, Object> summaryData = lmsClient.getListingSummary(listingId);
+        String summary = (String) summaryData.get("title");
         Message quoteMsg = Message.createQuoteMessage(room.getId(), tenantId, summary);
         
         Message saved = messageRepository.addMessageRecord(room.getId(), tenantId, quoteMsg.getContent());
@@ -57,12 +61,13 @@ public class ChatService {
         return saved.getId();
     }
 
-    public List<ChatRoomDTO> getUserChatRooms(String userId) {
+    public List<ChatRoomDTO> getUserChatRooms(UUID userId) {
         List<ChatRoom> rooms = chatRoomRepository.findByUserId(userId);
         return rooms.stream().map(room -> {
-            String otherUserId = userId.equals(room.getLandlordId()) ? room.getTenantId() : room.getLandlordId();
-            String otherUserName = uasClient.getUserProfile(otherUserId);
-            String listingTitle = lmsClient.getListingSummary(room.getListingId());
+            UUID otherUserId = userId.equals(room.getLandlordId()) ? room.getTenantId() : room.getLandlordId();
+            String otherUserName = uasClient.getUserProfile(otherUserId.toString());
+            Map<String, Object> summaryData = lmsClient.getListingSummary(room.getListingId());
+            String listingTitle = (String) summaryData.get("title");
             boolean hasUnread = messageRepository.hasUnreadMessages(room.getId(), userId);
             
             return new ChatRoomDTO(
@@ -77,17 +82,17 @@ public class ChatService {
         }).collect(Collectors.toList());
     }
 
-    public boolean hasGlobalUnread(String userId) {
+    public boolean hasGlobalUnread(UUID userId) {
         return messageRepository.hasAnyUnreadMessages(userId);
     }
 
-    public List<Message> getMessages(String chatRoomId, String userId) {
+    public List<Message> getMessages(String chatRoomId, UUID userId) {
         // userId check could be added
         return messageRepository.findByChatRoomId(chatRoomId);
     }
 
-    public void markMessagesAsRead(String chatRoomId, String receiverId) {
+    public void markMessagesAsRead(String chatRoomId, UUID receiverId) {
         messageRepository.markAsRead(chatRoomId, receiverId);
-        messageBroadcaster.notifyReadReceipt(chatRoomId, receiverId);
+        messageBroadcaster.notifyReadReceipt(chatRoomId, receiverId.toString());
     }
 }

@@ -2,16 +2,18 @@ package com.riap.pbi.rcs.domain;
 
 import org.junit.jupiter.api.Test;
 import java.time.Instant;
+import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MessageTest {
 
     @Test
     void testCreateMessage() {
-        Message message = Message.create("room-1", "user-1", "Hello World");
+        UUID userId = UUID.randomUUID();
+        Message message = Message.create("room-1", userId, "Hello World");
         assertNotNull(message.getId());
         assertEquals("room-1", message.getChatRoomId());
-        assertEquals("user-1", message.getSenderUserId());
+        assertEquals(userId, message.getSenderUserId());
         assertEquals("Hello World", message.getContent());
         assertNotNull(message.getSentAt());
         assertFalse(message.isRead());
@@ -19,7 +21,8 @@ class MessageTest {
 
     @Test
     void testMarkAsRead() {
-        Message message = Message.create("room-1", "user-1", "Hello");
+        UUID userId = UUID.randomUUID();
+        Message message = Message.create("room-1", userId, "Hello");
         assertFalse(message.isRead());
         message.markAsRead();
         assertTrue(message.isRead());
@@ -28,10 +31,11 @@ class MessageTest {
     @Test
     void testRehydrate() {
         Instant now = Instant.now();
-        Message message = Message.rehydrate("msg-1", "room-1", "user-1", "Hi", now, true);
+        UUID userId = UUID.randomUUID();
+        Message message = Message.rehydrate("msg-1", "room-1", userId, "Hi", now, true);
         assertEquals("msg-1", message.getId());
         assertEquals("room-1", message.getChatRoomId());
-        assertEquals("user-1", message.getSenderUserId());
+        assertEquals(userId, message.getSenderUserId());
         assertEquals("Hi", message.getContent());
         assertEquals(now, message.getSentAt());
         assertTrue(message.isRead());
