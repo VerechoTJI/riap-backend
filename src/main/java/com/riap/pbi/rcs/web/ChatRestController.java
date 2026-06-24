@@ -87,7 +87,7 @@ public class ChatRestController {
     @GetMapping("/history/{roomId}")
     public ResponseEntity<List<Message>> getHistory(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable String roomId) {
+            @PathVariable("roomId") String roomId) {
         String userId = getUserId(authHeader);
         return ResponseEntity.ok(chatService.getMessages(roomId, userId));
     }
@@ -95,7 +95,7 @@ public class ChatRestController {
     @PutMapping("/read/{roomId}")
     public ResponseEntity<Void> markAsRead(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable String roomId) {
+            @PathVariable("roomId") String roomId) {
         String userId = getUserId(authHeader);
         chatService.markMessagesAsRead(roomId, userId);
         return ResponseEntity.ok().build();
