@@ -41,21 +41,26 @@ public class ListingSearchController {
             @RequestParam(name = "size", defaultValue = "10") int size,
             @RequestParam(name = "sort", required = false) String sort
     ) {
-        ListingFilter filter = ListingFilter.builder()
-                .keyword(keyword)
-                .city(city)
-                .propertyType(propertyType != null ? PropertyType.valueOf(propertyType) : null)
-                .minRentCents(minRent)
-                .maxRentCents(maxRent)
-                .hasInternet(hasInternet)
-                .hasFurniture(hasFurniture)
-                .hasAC(hasAC)
-                .petFriendly(petFriendly)
-                .hasParking(hasParking)
-                .page(page)
-                .size(size)
-                .sortOrder(sort != null ? SortOrder.valueOf(sort) : null)
-                .build();
+        ListingFilter filter;
+        try {
+            filter = ListingFilter.builder()
+                    .keyword(keyword)
+                    .city(city)
+                    .propertyType(propertyType != null && !propertyType.isEmpty() ? PropertyType.valueOf(propertyType) : null)
+                    .minRentCents(minRent)
+                    .maxRentCents(maxRent)
+                    .hasInternet(hasInternet)
+                    .hasFurniture(hasFurniture)
+                    .hasAC(hasAC)
+                    .petFriendly(petFriendly)
+                    .hasParking(hasParking)
+                    .page(page)
+                    .size(size)
+                    .sortOrder(sort != null && !sort.isEmpty() ? SortOrder.valueOf(sort) : null)
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid propertyType or sort order"));
+        }
 
         List<ListingResponse> listings = listingSearchService.search(filter)
                 .stream()
