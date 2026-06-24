@@ -14,6 +14,28 @@ mvn: The term 'mvn' is not recognized as a name of a cmdlet, function, script fi
 
 Install Maven (for example via winget) and re-run the commands below.
 
+## Run the Application
+
+To run the backend server with the actual PostgreSQL database, first start the database from the root repository folder:
+
+```powershell
+docker-compose up -d
+```
+
+Then, set the environment variables and run with the `postgres` profile:
+
+```powershell
+$env:DB_PORT="5433"
+$env:DB_PASSWORD="riap"
+mvn spring-boot:run -Dspring-boot.run.profiles=postgres
+```
+
+If you just want to run with an in-memory H2 database (data will be lost on restart), simply run:
+
+```powershell
+mvn spring-boot:run
+```
+
 ## Build
 
 From this folder:
