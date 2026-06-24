@@ -13,6 +13,7 @@ import com.riap.user.domain.model.UserRole;
 import com.riap.user.domain.model.UserStatus;
 import com.riap.user.domain.repository.UserAccountRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -29,13 +30,15 @@ public class DemoDataInitializer implements CommandLineRunner {
     private final MessageRepository messageRepo;
     private final UserAccountRepository userAccountRepo;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
 
-    public DemoDataInitializer(ListingRepository listingRepo, ChatRoomRepository chatRoomRepo, MessageRepository messageRepo, UserAccountRepository userAccountRepository, PasswordEncoder passwordEncoder) {
+    public DemoDataInitializer(ListingRepository listingRepo, ChatRoomRepository chatRoomRepo, MessageRepository messageRepo, UserAccountRepository userAccountRepo, PasswordEncoder passwordEncoder, JdbcTemplate jdbcTemplate) {
         this.listingRepo = listingRepo;
         this.chatRoomRepo = chatRoomRepo;
         this.messageRepo = messageRepo;
-        this.userAccountRepo = userAccountRepository;
+        this.userAccountRepo = userAccountRepo;
         this.passwordEncoder = passwordEncoder;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -46,30 +49,11 @@ public class DemoDataInitializer implements CommandLineRunner {
         UUID adminIdUuid = UUID.fromString("00000000-0000-0000-0000-000000000003");
 
         if (userAccountRepo.count() == 0) {
-            // 1. Create Users
-            userAccountRepo.save(UserAccountEntity.builder()
-                    .id(landlordIdUuid)
-                    .loginIdentifier("landlord")
-                    .passwordHash(passwordEncoder.encode("password"))
-                    .role(UserRole.LANDLORD)
-                    .status(UserStatus.ACTIVE)
-                    .build());
-
-            userAccountRepo.save(UserAccountEntity.builder()
-                    .id(tenantIdUuid)
-                    .loginIdentifier("tenant")
-                    .passwordHash(passwordEncoder.encode("password"))
-                    .role(UserRole.TENANT)
-                    .status(UserStatus.ACTIVE)
-                    .build());
-
-            userAccountRepo.save(UserAccountEntity.builder()
-                    .id(adminIdUuid)
-                    .loginIdentifier("admin")
-                    .passwordHash(passwordEncoder.encode("password"))
-                    .role(UserRole.ADMIN)
-                    .status(UserStatus.ACTIVE)
-                    .build());
+            String insertSql = "INSERT INTO user_accounts (id, login_identifier, password_hash, role, status) VALUES (?, ?, ?, ?, ?)";
+            
+            jdbcTemplate.update(insertSql, landlordIdUuid, "bob", passwordEncoder.encode("password"), "LANDLORD", "ACTIVE");
+            jdbcTemplate.update(insertSql, tenantIdUuid, "alice", passwordEncoder.encode("password"), "TENANT", "ACTIVE");
+            jdbcTemplate.update(insertSql, adminIdUuid, "admin", passwordEncoder.encode("password"), "ADMIN", "ACTIVE");
         }
 
         if (listingRepo.count() > 0) {

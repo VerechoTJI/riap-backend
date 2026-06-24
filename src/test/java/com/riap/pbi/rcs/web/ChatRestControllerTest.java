@@ -86,7 +86,7 @@ class ChatRestControllerTest {
         UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000001");
         UUID landlordId = UUID.fromString("00000000-0000-0000-0000-000000000002");
         com.riap.pbi.rcs.domain.ChatRoomDTO dto = new com.riap.pbi.rcs.domain.ChatRoomDTO(
-                "room-1", tenantId, landlordId, "list-1", "Alice", "Beautiful Apartment", true
+                "room-1", tenantId, landlordId, "list-1", "Alice", "Beautiful Apartment", "台北市", "http://image.url", "Hello", true
         );
         when(chatService.getUserChatRooms(tenantId)).thenReturn(java.util.Collections.singletonList(dto));
 

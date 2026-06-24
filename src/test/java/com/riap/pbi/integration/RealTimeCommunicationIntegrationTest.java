@@ -2,6 +2,9 @@ package com.riap.pbi.integration;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.riap.pbi.rcs.port.AuthenticationProvider;
+import com.riap.pbi.rcs.port.LmsClient;
+import com.riap.user.domain.model.UserRole;
 import com.riap.pbi.rcs.domain.ChatRoom;
 import com.riap.pbi.rcs.domain.Message;
 import com.riap.pbi.rcs.domain.ChatRoomDTO;
@@ -9,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
@@ -27,11 +31,15 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -54,12 +62,22 @@ public class RealTimeCommunicationIntegrationTest {
     private UUID tenantId;
     private UUID landlordId;
 
+    @MockBean
+    private LmsClient lmsClient;
+
     @BeforeEach
     void setup() {
         tenantId = UUID.fromString("00000000-0000-0000-0000-000000000001");
         landlordId = UUID.fromString("00000000-0000-0000-0000-000000000002");
         TENANT_TOKEN = jwtService.generateToken(tenantId, UserRole.TENANT);
         LANDLORD_TOKEN = jwtService.generateToken(landlordId, UserRole.LANDLORD);
+
+        when(lmsClient.getLandlordIdForListing(anyString())).thenReturn(landlordId);
+        Map<String, Object> mockSummary = new HashMap<>();
+        mockSummary.put("title", "台北市中正區採光套房");
+        mockSummary.put("imageUrl", "Test Image");
+        mockSummary.put("city", "Test City");
+        when(lmsClient.getListingSummary(anyString())).thenReturn(mockSummary);
     }
 
     private HttpHeaders createHeaders(String token) {
