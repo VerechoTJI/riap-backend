@@ -132,7 +132,30 @@ public class ListingManagementIntegrationTest {
         assertThat(response.getBody().getReturnReason()).isEqualTo("照片不清楚");
     }
 
-    // [LMS-TC03] 驗證一鍵下架與狀態同步功能
+    // [LMS-TC03] 驗證單一房源下架功能
+    @Test
+    void testUnpublishSingleListing() {
+        ListingEntity listing = listingRepository.save(ListingEntity.builder()
+                .title("L1")
+                .landlordId("landlord-1")
+                .status(ListingStatus.PUBLISHED)
+                .build());
+
+        ResponseEntity<ListingEntity> response = restTemplate.exchange(
+                "/api/listings/" + listing.getId() + "/unpublish",
+                HttpMethod.PATCH,
+                null,
+                ListingEntity.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getStatus()).isEqualTo(ListingStatus.PRIVATE);
+
+        ListingEntity saved = listingRepository.findById(listing.getId()).orElseThrow();
+        assertThat(saved.getStatus()).isEqualTo(ListingStatus.PRIVATE);
+    }
+
+    // [LMS-TC05] 驗證一鍵全部下架功能
     @Test
     void testBulkUnpublish() {
         String landlordId = "landlord-x";
