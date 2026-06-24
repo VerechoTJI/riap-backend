@@ -27,19 +27,19 @@ public class ListingSearchController {
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> search(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String propertyType,
-            @RequestParam(required = false) Long minRent,
-            @RequestParam(required = false) Long maxRent,
-            @RequestParam(required = false) Boolean hasInternet,
-            @RequestParam(required = false) Boolean hasFurniture,
-            @RequestParam(required = false) Boolean hasAC,
-            @RequestParam(required = false) Boolean petFriendly,
-            @RequestParam(required = false) Boolean hasParking,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String sort
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "city", required = false) String city,
+            @RequestParam(name = "propertyType", required = false) String propertyType,
+            @RequestParam(name = "minRent", required = false) Long minRent,
+            @RequestParam(name = "maxRent", required = false) Long maxRent,
+            @RequestParam(name = "hasInternet", required = false) Boolean hasInternet,
+            @RequestParam(name = "hasFurniture", required = false) Boolean hasFurniture,
+            @RequestParam(name = "hasAC", required = false) Boolean hasAC,
+            @RequestParam(name = "petFriendly", required = false) Boolean petFriendly,
+            @RequestParam(name = "hasParking", required = false) Boolean hasParking,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sort", required = false) String sort
     ) {
         ListingFilter filter = ListingFilter.builder()
                 .keyword(keyword)
@@ -66,8 +66,12 @@ public class ListingSearchController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ListingResponse> getById(@PathVariable UUID id) {
-        com.riap.listing.domain.model.ListingEntity entity = listingSearchService.findById(id);
-        return ResponseEntity.ok(ListingResponse.from(entity));
+    public ResponseEntity<ListingResponse> getById(@PathVariable(name = "id") UUID id) {
+        try {
+            com.riap.listing.domain.model.ListingEntity entity = listingSearchService.findById(id);
+            return ResponseEntity.ok(ListingResponse.from(entity));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
