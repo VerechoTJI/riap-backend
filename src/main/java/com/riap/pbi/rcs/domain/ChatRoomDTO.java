@@ -25,5 +25,6 @@ public class ChatRoomDTO {
     public String getListingId() { return listingId; }
     public String getOtherUserName() { return otherUserName; }
     public String getListingTitle() { return listingTitle; }
+    public boolean getHasUnread() { return hasUnread; }
     public boolean hasUnread() { return hasUnread; }
 }
