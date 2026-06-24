@@ -11,4 +11,5 @@ public interface MessageRepository {
     void markAsRead(String chatRoomId, UUID recipientId);
     boolean hasUnreadMessages(String chatRoomId, UUID userId);
     boolean hasAnyUnreadMessages(UUID userId);
+    void deleteByChatRoomId(String chatRoomId);
 }

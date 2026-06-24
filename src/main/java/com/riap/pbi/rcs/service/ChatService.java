@@ -104,4 +104,12 @@ public class ChatService {
         messageRepository.markAsRead(chatRoomId, receiverId);
         messageBroadcaster.notifyReadReceipt(chatRoomId, receiverId.toString());
     }
+
+    public void deleteAllRooms(UUID userId) {
+        List<ChatRoom> rooms = chatRoomRepository.findByUserId(userId);
+        for (ChatRoom room : rooms) {
+            messageRepository.deleteByChatRoomId(room.getId());
+        }
+        chatRoomRepository.deleteByUserId(userId);
+    }
 }

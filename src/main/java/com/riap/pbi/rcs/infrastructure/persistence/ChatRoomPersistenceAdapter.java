@@ -53,4 +53,10 @@ public class ChatRoomPersistenceAdapter implements ChatRoomRepository {
                 entity.getListingId()
         );
     }
+
+    @Override
+    public void deleteByUserId(UUID userId) {
+        List<ChatRoomEntity> rooms = jpaRepository.findByTenantIdOrLandlordId(userId, userId);
+        jpaRepository.deleteAll(rooms);
+    }
 }

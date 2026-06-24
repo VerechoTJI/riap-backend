@@ -33,6 +33,46 @@ public class ListingService {
     }
 
     @Transactional
+    public ListingEntity updateListing(UUID id, ListingEntity updated) {
+        ListingEntity existing = listingRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("房源不存在"));
+
+        // Basic validation for mandatory fields
+        if (updated.getFeeDisclosure() == null || 
+            updated.getFeeDisclosure().getRent() == null ||
+            updated.getFeeDisclosure().getDeposit() == null ||
+            updated.getFeeDisclosure().getManagementFee() == null ||
+            updated.getFeeDisclosure().getWaterElectricityRules() == null) {
+            throw new IllegalArgumentException("所有費用欄位均為必填");
+        }
+
+        existing.setTitle(updated.getTitle());
+        existing.setDescription(updated.getDescription());
+        existing.setArea(updated.getArea());
+        existing.setFloor(updated.getFloor());
+        existing.setLayout(updated.getLayout());
+        existing.setPropertyType(updated.getPropertyType());
+        existing.setFeeDisclosure(updated.getFeeDisclosure());
+        existing.setCity(updated.getCity());
+        existing.setDistrict(updated.getDistrict());
+        existing.setAddress(updated.getAddress());
+        existing.setTotalFloors(updated.getTotalFloors());
+        existing.setHasInternet(updated.getHasInternet());
+        existing.setHasFurniture(updated.getHasFurniture());
+        existing.setHasAC(updated.getHasAC());
+        existing.setPetFriendly(updated.getPetFriendly());
+        existing.setHasParking(updated.getHasParking());
+        existing.setAvailableFrom(updated.getAvailableFrom());
+        existing.setImageUrl(updated.getImageUrl());
+        
+        // When updated, send to pending again for review
+        existing.setStatus(ListingStatus.PENDING);
+        existing.setReturnReason(null);
+
+        return listingRepository.save(existing);
+    }
+
+    @Transactional
     public ListingEntity reviewListing(UUID listingId, ListingStatus newStatus, String reason) {
         ListingEntity listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new IllegalArgumentException("房源不存在"));

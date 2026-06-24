@@ -108,4 +108,14 @@ public class ChatRestController {
         UUID userId = getUserId(authHeader);
         return ResponseEntity.ok(chatService.hasGlobalUnread(userId));
     }
+
+    @DeleteMapping("/rooms")
+    public ResponseEntity<Map<String, Object>> deleteAllRooms(@RequestHeader("Authorization") String authHeader) {
+        UUID userId = getUserId(authHeader);
+        chatService.deleteAllRooms(userId);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("isSuccess", true);
+        return ResponseEntity.ok(response);
+    }
 }

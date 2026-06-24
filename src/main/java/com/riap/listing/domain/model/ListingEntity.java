@@ -25,6 +25,7 @@ public class ListingEntity {
     private String description;
     private Double area;
     private Integer floor;
+    private String layout;
 
     @Enumerated(EnumType.STRING)
     private PropertyType propertyType;

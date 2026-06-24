@@ -74,4 +74,10 @@ public class MessagePersistenceAdapter implements MessageRepository {
                 entity.isRead()
         );
     }
+
+    @Override
+    public void deleteByChatRoomId(String chatRoomId) {
+        List<ChatMessageEntity> msgs = jpaRepository.findByChatRoomIdOrderBySentAtAsc(chatRoomId);
+        jpaRepository.deleteAll(msgs);
+    }
 }
