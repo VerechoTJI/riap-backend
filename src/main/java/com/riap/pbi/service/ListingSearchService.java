@@ -25,6 +25,10 @@ public class ListingSearchService {
         this.listingRepository = listingRepository;
     }
 
+    public ListingEntity findById(java.util.UUID id) {
+        return listingRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("房源不存在"));
+    }
+
     public List<ListingEntity> search(ListingFilter filter) {
         ListingFilter effective = filter != null ? filter : ListingFilter.empty();
         

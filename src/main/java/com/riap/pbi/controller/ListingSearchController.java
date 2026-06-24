@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/listings")
@@ -61,5 +63,11 @@ public class ListingSearchController {
                 .toList();
 
         return ResponseEntity.ok(Map.of("listings", listings));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ListingResponse> getById(@PathVariable UUID id) {
+        com.riap.listing.domain.model.ListingEntity entity = listingSearchService.findById(id);
+        return ResponseEntity.ok(ListingResponse.from(entity));
     }
 }
