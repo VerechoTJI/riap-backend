@@ -45,6 +45,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- Lightweight crypto only (BCryptPasswordEncoder) for UAS password
+             hashing (UAS-N-09). Avoids the full spring-boot-starter-security
+             filter chain, which would lock down the existing open endpoints. -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
 
         <!-- PostgreSQL Driver -->
         <dependency>
