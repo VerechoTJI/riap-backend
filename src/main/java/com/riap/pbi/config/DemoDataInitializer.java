@@ -5,8 +5,10 @@ import com.riap.listing.domain.model.ListingEntity;
 import com.riap.listing.domain.model.ListingStatus;
 import com.riap.listing.domain.model.PropertyType;
 import com.riap.listing.domain.repository.ListingRepository;
+import com.riap.pbi.rcs.domain.ChatRoom;
+import com.riap.pbi.rcs.port.ChatRoomRepository;
+import com.riap.pbi.rcs.port.MessageRepository;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -14,19 +16,28 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Component
-@Profile("demo")
 public class DemoDataInitializer implements CommandLineRunner {
 
     private final ListingRepository listingRepo;
+    private final ChatRoomRepository chatRoomRepo;
+    private final MessageRepository messageRepo;
 
-    public DemoDataInitializer(ListingRepository listingRepo) {
+    public DemoDataInitializer(ListingRepository listingRepo, ChatRoomRepository chatRoomRepo, MessageRepository messageRepo) {
         this.listingRepo = listingRepo;
+        this.chatRoomRepo = chatRoomRepo;
+        this.messageRepo = messageRepo;
     }
 
     @Override
     public void run(String... args) {
+        if (listingRepo.count() > 0) {
+            System.out.println("Database already contains data. Skipping demo data initialization.");
+            return;
+        }
+
         // Sync landlordId with RCS fake users (FakeUasClient ID "2" = Bob Wang)
         String landlordId = "2";
+        String tenantId = "1"; // Alice Chen
 
         listingRepo.save(ListingEntity.builder()
                 .title("台北大安套房，近捷運")
@@ -105,6 +116,8 @@ public class DemoDataInitializer implements CommandLineRunner {
                 .description("近高雄展覽館，交通便利")
                 .feeDisclosure(FeeDisclosure.builder()
                         .rent(new BigDecimal("12000.00"))
+                        .deposit(new BigDecimal("24000.00"))
+                        .managementFee(new BigDecimal("0.00"))
                         .build())
                 .landlordId(landlordId).city("高雄市").district("前鎮區").propertyType(PropertyType.STUDIO)
                 .area(8.0).floor(4).totalFloors(8)
@@ -112,8 +125,14 @@ public class DemoDataInitializer implements CommandLineRunner {
                 .status(ListingStatus.PENDING)
                 .build());
 
+        // Create Fake Chat Rooms and Messages
+        ChatRoom chatRoom1 = chatRoomRepo.addChatSession(tenantId, landlordId, "1");
+        messageRepo.addMessageRecord(chatRoom1.getId(), tenantId, "請問這間套房還有空嗎？");
+        messageRepo.addMessageRecord(chatRoom1.getId(), landlordId, "有的，隨時可以看房喔！");
+
         System.out.println("===================================================");
         System.out.println(" Demo data loaded: 4 PUBLISHED + 1 PENDING listings");
+        System.out.println(" Demo data loaded: 1 ChatRoom with 2 Messages");
         System.out.println(" API: http://localhost:8080/api/listings");
         System.out.println("===================================================");
     }
