@@ -79,12 +79,13 @@ class ChatServiceTest {
         ChatRoom room1 = ChatRoom.rehydrate("room-1", "tenant-1", "landlord-1", "list-1");
         ChatRoom room2 = ChatRoom.rehydrate("room-2", "tenant-2", "landlord-1", "list-2");
         when(chatRoomRepository.findByUserId("landlord-1")).thenReturn(Arrays.asList(room1, room2));
-        
-        when(lmsClient.getListingSummary("list-1")).thenReturn("Listing Title 1");
-        when(lmsClient.getListingSummary("list-2")).thenReturn("Listing Title 2");
-        
         when(uasClient.getUserProfile("tenant-1")).thenReturn("Alice");
         when(uasClient.getUserProfile("tenant-2")).thenReturn("Bob");
+        when(lmsClient.getListingSummary("list-1")).thenReturn("Listing 1");
+        when(lmsClient.getListingSummary("list-2")).thenReturn("Listing 2");
+        
+        when(messageRepository.hasUnreadMessages("room-1", "landlord-1")).thenReturn(true);
+        when(messageRepository.hasUnreadMessages("room-2", "landlord-1")).thenReturn(false);
 
         List<com.riap.pbi.rcs.domain.ChatRoomDTO> result = chatService.getUserChatRooms("landlord-1");
         
@@ -92,10 +93,19 @@ class ChatServiceTest {
         
         assertEquals("room-1", result.get(0).getId());
         assertEquals("Alice", result.get(0).getOtherUserName());
-        assertEquals("Listing Title 1", result.get(0).getListingTitle());
+        assertTrue(result.get(0).hasUnread());
         
         assertEquals("room-2", result.get(1).getId());
         assertEquals("Bob", result.get(1).getOtherUserName());
-        assertEquals("Listing Title 2", result.get(1).getListingTitle());
+        assertFalse(result.get(1).hasUnread());
+    }
+
+    @Test
+    void testHasGlobalUnread() {
+        when(messageRepository.hasAnyUnreadMessages("user-1")).thenReturn(true);
+        assertTrue(chatService.hasGlobalUnread("user-1"));
+        
+        when(messageRepository.hasAnyUnreadMessages("user-1")).thenReturn(false);
+        assertFalse(chatService.hasGlobalUnread("user-1"));
     }
 }

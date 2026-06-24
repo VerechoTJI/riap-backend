@@ -63,6 +63,7 @@ public class ChatService {
             String otherUserId = userId.equals(room.getLandlordId()) ? room.getTenantId() : room.getLandlordId();
             String otherUserName = uasClient.getUserProfile(otherUserId);
             String listingTitle = lmsClient.getListingSummary(room.getListingId());
+            boolean hasUnread = messageRepository.hasUnreadMessages(room.getId(), userId);
             
             return new ChatRoomDTO(
                     room.getId(),
@@ -70,9 +71,14 @@ public class ChatService {
                     room.getLandlordId(),
                     room.getListingId(),
                     otherUserName != null ? otherUserName : "對方",
-                    listingTitle != null ? listingTitle : "租屋對話"
+                    listingTitle != null ? listingTitle : "租屋對話",
+                    hasUnread
             );
         }).collect(Collectors.toList());
+    }
+
+    public boolean hasGlobalUnread(String userId) {
+        return messageRepository.hasAnyUnreadMessages(userId);
     }
 
     public List<Message> getMessages(String chatRoomId, String userId) {

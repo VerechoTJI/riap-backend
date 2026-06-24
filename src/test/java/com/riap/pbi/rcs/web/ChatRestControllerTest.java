@@ -80,7 +80,7 @@ class ChatRestControllerTest {
     @Test
     void testGetRooms() throws Exception {
         com.riap.pbi.rcs.domain.ChatRoomDTO dto = new com.riap.pbi.rcs.domain.ChatRoomDTO(
-                "room-1", "tenant-1", "landlord-1", "list-1", "Alice", "Beautiful Apartment"
+                "room-1", "tenant-1", "landlord-1", "list-1", "Alice", "Beautiful Apartment", true
         );
         when(chatService.getUserChatRooms("tenant-1")).thenReturn(java.util.Collections.singletonList(dto));
 
@@ -90,5 +90,15 @@ class ChatRestControllerTest {
                 .andExpect(jsonPath("$[0].id").value("room-1"))
                 .andExpect(jsonPath("$[0].otherUserName").value("Alice"))
                 .andExpect(jsonPath("$[0].listingTitle").value("Beautiful Apartment"));
+    }
+
+    @Test
+    void testHasUnread() throws Exception {
+        when(chatService.hasGlobalUnread("tenant-1")).thenReturn(true);
+        
+        mockMvc.perform(get("/api/chat/hasUnread")
+                .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
     }
 }

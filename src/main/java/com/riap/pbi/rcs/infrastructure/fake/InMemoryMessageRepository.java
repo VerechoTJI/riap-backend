@@ -40,4 +40,19 @@ public class InMemoryMessageRepository implements MessageRepository {
             }
         }
     }
+
+    @Override
+    public boolean hasUnreadMessages(String chatRoomId, String userId) {
+        return messages.stream()
+                .anyMatch(msg -> msg.getChatRoomId().equals(chatRoomId)
+                        && !msg.getSenderUserId().equals(userId)
+                        && !msg.isRead());
+    }
+
+    @Override
+    public boolean hasAnyUnreadMessages(String userId) {
+        return messages.stream()
+                .anyMatch(msg -> !msg.getSenderUserId().equals(userId)
+                        && !msg.isRead());
+    }
 }

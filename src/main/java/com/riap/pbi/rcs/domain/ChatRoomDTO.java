@@ -7,14 +7,16 @@ public class ChatRoomDTO {
     private String listingId;
     private String otherUserName;
     private String listingTitle;
+    private boolean hasUnread;
 
-    public ChatRoomDTO(String id, String tenantId, String landlordId, String listingId, String otherUserName, String listingTitle) {
+    public ChatRoomDTO(String id, String tenantId, String landlordId, String listingId, String otherUserName, String listingTitle, boolean hasUnread) {
         this.id = id;
         this.tenantId = tenantId;
         this.landlordId = landlordId;
         this.listingId = listingId;
         this.otherUserName = otherUserName;
         this.listingTitle = listingTitle;
+        this.hasUnread = hasUnread;
     }
 
     public String getId() { return id; }
@@ -23,4 +25,5 @@ public class ChatRoomDTO {
     public String getListingId() { return listingId; }
     public String getOtherUserName() { return otherUserName; }
     public String getListingTitle() { return listingTitle; }
+    public boolean hasUnread() { return hasUnread; }
 }

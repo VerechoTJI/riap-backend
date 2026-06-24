@@ -100,4 +100,10 @@ public class ChatRestController {
         chatService.markMessagesAsRead(roomId, userId);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/hasUnread")
+    public ResponseEntity<Boolean> hasUnread(@RequestHeader("Authorization") String authHeader) {
+        String userId = getUserId(authHeader);
+        return ResponseEntity.ok(chatService.hasGlobalUnread(userId));
+    }
 }

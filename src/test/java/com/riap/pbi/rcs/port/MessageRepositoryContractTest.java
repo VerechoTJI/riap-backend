@@ -58,4 +58,42 @@ public abstract class MessageRepositoryContractTest {
         // Verify that the message was marked as read
         assertTrue(messages.get(0).isRead(), "Message should be marked as read when the receiver reads it in DB");
     }
+
+    @Test
+    void testHasUnreadMessages() {
+        MessageRepository repository = getRepository();
+        String chatRoomId = "room-unread-1";
+        
+        // user-1 sends message to user-2
+        repository.addMessageRecord(chatRoomId, "user-1", "Msg 1");
+        
+        // user-2 should have unread messages
+        assertTrue(repository.hasUnreadMessages(chatRoomId, "user-2"));
+        // user-1 should NOT have unread messages (they sent it)
+        assertFalse(repository.hasUnreadMessages(chatRoomId, "user-1"));
+        
+        // user-2 reads
+        repository.markAsRead(chatRoomId, "user-2");
+        assertFalse(repository.hasUnreadMessages(chatRoomId, "user-2"));
+    }
+
+    @Test
+    void testHasAnyUnreadMessages() {
+        MessageRepository repository = getRepository();
+        
+        // user-1 sends message to user-2 in room A
+        repository.addMessageRecord("room-A", "user-1", "Hello");
+        
+        // user-2 should have unread in ANY room
+        assertTrue(repository.hasAnyUnreadMessages("user-2"));
+        assertFalse(repository.hasAnyUnreadMessages("user-1"));
+        
+        // user-2 reads room A
+        repository.markAsRead("room-A", "user-2");
+        assertFalse(repository.hasAnyUnreadMessages("user-2"));
+        
+        // user-3 sends message to user-2 in room B
+        repository.addMessageRecord("room-B", "user-3", "Hi");
+        assertTrue(repository.hasAnyUnreadMessages("user-2"));
+    }
 }
