@@ -68,7 +68,13 @@ public class ChatService {
             String otherUserName = uasClient.getUserProfile(otherUserId.toString());
             Map<String, Object> summaryData = lmsClient.getListingSummary(room.getListingId());
             String listingTitle = (String) summaryData.get("title");
+            String listingCity = (String) summaryData.get("city");
+            String listingImageUrl = (String) summaryData.get("imageUrl");
             boolean hasUnread = messageRepository.hasUnreadMessages(room.getId(), userId);
+            
+            // Get last message for summary preview
+            List<Message> roomMessages = messageRepository.findByChatRoomId(room.getId());
+            String lastMessage = roomMessages.isEmpty() ? "" : roomMessages.get(roomMessages.size() - 1).getContent();
             
             return new ChatRoomDTO(
                     room.getId(),
@@ -77,6 +83,9 @@ public class ChatService {
                     room.getListingId(),
                     otherUserName != null ? otherUserName : "對方",
                     listingTitle != null ? listingTitle : "租屋對話",
+                    listingCity != null ? listingCity : "",
+                    listingImageUrl != null ? listingImageUrl : "https://via.placeholder.com/150",
+                    lastMessage,
                     hasUnread
             );
         }).collect(Collectors.toList());
