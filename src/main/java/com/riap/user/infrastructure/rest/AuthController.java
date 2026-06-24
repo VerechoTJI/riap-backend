@@ -4,6 +4,10 @@ import com.riap.user.application.service.AuthenticationResult;
 import com.riap.user.application.service.AuthenticationService;
 import com.riap.user.domain.model.UserAccountEntity;
 import com.riap.user.domain.model.UserRole;
+import com.riap.user.security.AuthenticatedUser;
+import com.riap.user.security.JwtService;
+import com.riap.user.security.RequireRole;
+import com.riap.user.security.TokenBlacklist;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,9 +17,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 /**
- * REST endpoints for the UAS (SDD 5.2.1 {@code login}). Token issuance is not yet
- * implemented; {@code login} returns the authenticated user's id and role so the
- * client can drive role-based routing (UAS-F-03). JWT/session tokens are a follow-up.
+ * REST endpoints for the UAS (SDD 5.2.1 {@code login}). Successful login issues a
+ * signed JWT (UAS-F-01, UAS-F-03); {@code logout} revokes it (UAS-F-01); {@code me}
+ * and {@code admin-area} demonstrate role-based access control via {@link RequireRole}
+ * (UAS-F-02, UAS-F-04).
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -23,6 +28,8 @@ import java.util.UUID;
 public class AuthController {
 
     private final AuthenticationService authenticationService;
+    private final JwtService jwtService;
+    private final TokenBlacklist tokenBlacklist;
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest request) {
@@ -37,9 +44,30 @@ public class AuthController {
                 authenticationService.authenticate(request.getAccount(), request.getPassword());
         if (!result.isSuccess()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new LoginResponse(false, null, null));
+                    .body(new LoginResponse(false, null, null, null));
         }
-        return ResponseEntity.ok(new LoginResponse(true, result.userId(), result.role()));
+        String token = jwtService.generateToken(result.userId(), result.role());
+        return ResponseEntity.ok(new LoginResponse(true, result.userId(), result.role(), token));
+    }
+
+    @PostMapping("/logout")
+    @RequireRole
+    public ResponseEntity<Void> logout(@RequestAttribute(AuthenticatedUser.ATTRIBUTE) AuthenticatedUser user) {
+        tokenBlacklist.revoke(user.tokenId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    @RequireRole
+    public ResponseEntity<MeResponse> me(@RequestAttribute(AuthenticatedUser.ATTRIBUTE) AuthenticatedUser user) {
+        return ResponseEntity.ok(new MeResponse(user.userId(), user.role()));
+    }
+
+    /** Demonstrates role enforcement; teammates annotate their own admin endpoints the same way. */
+    @GetMapping("/admin-area")
+    @RequireRole(UserRole.ADMIN)
+    public ResponseEntity<String> adminArea() {
+        return ResponseEntity.ok("admin ok");
     }
 
     @Data
@@ -63,6 +91,13 @@ public class AuthController {
     @Data
     public static class LoginResponse {
         private final boolean success;
+        private final UUID userId;
+        private final UserRole role;
+        private final String token;
+    }
+
+    @Data
+    public static class MeResponse {
         private final UUID userId;
         private final UserRole role;
     }
