@@ -165,15 +165,12 @@ public class DemoDataInitializer implements CommandLineRunner {
                 .status(ListingStatus.PENDING)
                 .build());
 
-        // Create Fake Chat Rooms and Messages
-        ChatRoom chatRoom1 = chatRoomRepo.addChatSession(tenantIdUuid, landlordIdUuid, "1");
-        messageRepo.addMessageRecord(chatRoom1.getId(), tenantIdUuid, "請問這間套房還有空嗎？");
-        messageRepo.addMessageRecord(chatRoom1.getId(), landlordIdUuid, "有的，隨時可以看房喔！");
+
 
         System.out.println("===================================================");
         System.out.println(" Demo data loaded: 3 Users (landlord, tenant, admin) created with password 'password'");
         System.out.println(" Demo data loaded: 4 PUBLISHED + 1 PENDING listings");
-        System.out.println(" Demo data loaded: 1 ChatRoom with 2 Messages");
+
         System.out.println(" API: http://localhost:8080/api/listings");
         System.out.println("===================================================");
     }
