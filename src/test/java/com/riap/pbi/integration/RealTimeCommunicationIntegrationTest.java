@@ -108,7 +108,7 @@ public class RealTimeCommunicationIntegrationTest {
         }
     }
 
-    // [RCS-TC03] 收發訊息與廣播功能測試
+    // [RCS-TC03] 收發訊息測試 & [RCS-TC06] 接收訊息測試
     @Test
     void testSendMessageAndBroadcast() throws Exception {
         // Create Room
@@ -153,7 +153,7 @@ public class RealTimeCommunicationIntegrationTest {
         landlordSession.close();
     }
 
-    // [RCS-TC04] 聊天室歷史訊息查詢測試
+    // [RCS-TC04] 聊天室歷史訊息查詢測試 & [RCS-TC07] 顯示歷史紀錄測試
     @Test
     void testGetChatHistory() {
         // Create Room
