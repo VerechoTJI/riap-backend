@@ -108,7 +108,7 @@ class ListingServiceTest {
 
     @Test
     void unpublishAllByLandlord_ShouldSetStatusToPrivate() {
-        UUID landlordId = UUID.randomUUID();
+        String landlordId = UUID.randomUUID().toString();
         ListingEntity l1 = ListingEntity.builder().status(ListingStatus.PUBLISHED).build();
         ListingEntity l2 = ListingEntity.builder().status(ListingStatus.PENDING).build();
         

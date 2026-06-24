@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -33,6 +35,21 @@ public class ListingEntity {
     @Embedded
     private FeeDisclosure feeDisclosure;
 
-    private UUID landlordId;
+    private String city;
+    private String district;
+    private String address;
+    private Integer totalFloors;
+
+    private Boolean hasInternet;
+    private Boolean hasFurniture;
+    private Boolean hasAC;
+    private Boolean petFriendly;
+    private Boolean hasParking;
+
+    private LocalDate availableFrom;
+    private LocalDateTime postedAt;
+    private String imageUrl;
+
+    private String landlordId;
     private String returnReason;
 }

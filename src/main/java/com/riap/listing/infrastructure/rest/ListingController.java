@@ -34,7 +34,7 @@ public class ListingController {
     }
 
     @GetMapping("/landlord/{landlordId}")
-    public ResponseEntity<List<ListingEntity>> getByLandlord(@PathVariable UUID landlordId) {
+    public ResponseEntity<List<ListingEntity>> getByLandlord(@PathVariable String landlordId) {
         return ResponseEntity.ok(listingService.getListingsByLandlordId(landlordId));
     }
 
@@ -54,7 +54,7 @@ public class ListingController {
     }
 
     @PatchMapping("/bulk-unpublish/{landlordId}")
-    public ResponseEntity<Void> bulkUnpublish(@PathVariable UUID landlordId) {
+    public ResponseEntity<Void> bulkUnpublish(@PathVariable String landlordId) {
         listingService.unpublishAllByLandlord(landlordId);
         return ResponseEntity.ok().build();
     }

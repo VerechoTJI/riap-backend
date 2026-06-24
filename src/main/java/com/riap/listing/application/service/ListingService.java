@@ -70,7 +70,7 @@ public class ListingService {
     }
 
     @Transactional
-    public void unpublishAllByLandlord(UUID landlordId) {
+    public void unpublishAllByLandlord(String landlordId) {
         List<ListingEntity> listings = listingRepository.findByLandlordId(landlordId);
         listings.stream()
                 .filter(l -> l.getStatus() == ListingStatus.PUBLISHED)
@@ -86,7 +86,7 @@ public class ListingService {
         return listingRepository.findByStatus(ListingStatus.PUBLISHED);
     }
 
-    public List<ListingEntity> getListingsByLandlordId(UUID landlordId) {
+    public List<ListingEntity> getListingsByLandlordId(String landlordId) {
         return listingRepository.findByLandlordId(landlordId);
     }
 }
